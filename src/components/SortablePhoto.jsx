@@ -24,6 +24,7 @@ export default function SortablePhoto({ photo, onDelete }) {
         src={photo.url}
         alt=""
         className="w-full h-full object-cover select-none"
+        style={{ touchAction: 'none' }}
         draggable={false}
         {...attributes}
         {...listeners}

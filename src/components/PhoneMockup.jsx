@@ -47,7 +47,7 @@ export default function PhoneMockup({ children }) {
           </div>
 
           {/* scrollable photo grid */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
             {children}
           </div>
 

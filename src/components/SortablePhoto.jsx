@@ -1,6 +1,16 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
+function GripIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+      <circle cx="4" cy="2" r="1.2"/><circle cx="8" cy="2" r="1.2"/>
+      <circle cx="4" cy="6" r="1.2"/><circle cx="8" cy="6" r="1.2"/>
+      <circle cx="4" cy="10" r="1.2"/><circle cx="8" cy="10" r="1.2"/>
+    </svg>
+  )
+}
+
 export default function SortablePhoto({ photo, onDelete }) {
   const {
     attributes,
@@ -24,16 +34,24 @@ export default function SortablePhoto({ photo, onDelete }) {
         src={photo.url}
         alt=""
         className="w-full h-full object-cover select-none"
-        style={{ touchAction: 'none' }}
         draggable={false}
+      />
+
+      {/* drag handle */}
+      <div
         {...attributes}
         {...listeners}
-      />
+        style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
+        className="absolute top-1 left-1 w-6 h-6 bg-black bg-opacity-50 text-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+      >
+        <GripIcon />
+      </div>
+
       {onDelete && (
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onDelete(photo.id, photo.storage_path)}
-          className="absolute top-0 right-0 w-5 h-5 bg-black bg-opacity-60 text-white text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100"
+          className="absolute top-1 right-1 w-6 h-6 bg-black bg-opacity-50 text-white text-sm leading-none flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
         >
           ×
         </button>

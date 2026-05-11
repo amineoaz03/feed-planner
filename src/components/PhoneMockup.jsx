@@ -1,4 +1,4 @@
-export default function PhoneMockup({ children }) {
+export default function PhoneMockup({ children, editMode, onToggleEdit }) {
   return (
     <div className="relative mx-auto" style={{ width: 300, height: 620 }}>
       {/* outer frame */}
@@ -40,10 +40,12 @@ export default function PhoneMockup({ children }) {
           {/* instagram-style header */}
           <div className="flex-shrink-0 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
             <span className="text-sm font-semibold">Feed Planner</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-            </svg>
+            <button
+              onClick={onToggleEdit}
+              className={`text-xs px-2 py-1 border ${editMode ? 'bg-black text-white border-black' : 'border-gray-400 text-gray-500'}`}
+            >
+              {editMode ? 'Done' : 'Edit'}
+            </button>
           </div>
 
           {/* scrollable photo grid */}

@@ -11,7 +11,7 @@ function GripIcon() {
   )
 }
 
-export default function SortablePhoto({ photo, onDelete }) {
+export default function SortablePhoto({ photo, onDelete, editMode }) {
   const {
     attributes,
     listeners,
@@ -37,24 +37,27 @@ export default function SortablePhoto({ photo, onDelete }) {
         draggable={false}
       />
 
-      {/* drag handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
-        className="absolute top-1 left-1 w-6 h-6 bg-black bg-opacity-50 text-white flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-      >
-        <GripIcon />
-      </div>
+      {editMode && (
+        <>
+          <div
+            {...attributes}
+            {...listeners}
+            style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
+            className="absolute top-1 left-1 w-6 h-6 bg-black bg-opacity-50 text-white flex items-center justify-center"
+          >
+            <GripIcon />
+          </div>
 
-      {onDelete && (
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onDelete(photo.id, photo.storage_path)}
-          className="absolute top-1 right-1 w-6 h-6 bg-black bg-opacity-50 text-white text-sm leading-none flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-        >
-          ×
-        </button>
+          {onDelete && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => onDelete(photo.id, photo.storage_path)}
+              className="absolute top-1 right-1 w-6 h-6 bg-black bg-opacity-50 text-white text-sm leading-none flex items-center justify-center"
+            >
+              ×
+            </button>
+          )}
+        </>
       )}
     </div>
   )

@@ -5,6 +5,7 @@ import PhotoGrid from '../components/PhotoGrid'
 
 export default function Client() {
   const [photos, setPhotos] = useState([])
+  const [editMode, setEditMode] = useState(false)
   const updatingRef = useRef(false)
 
   useEffect(() => {
@@ -53,11 +54,12 @@ export default function Client() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
       <h1 className="text-xl font-bold mb-6">Feed Preview</h1>
-      <PhoneMockup>
+      <PhoneMockup editMode={editMode} onToggleEdit={() => setEditMode(e => !e)}>
         <PhotoGrid
           photos={photos}
-          onReorder={handleReorder}
-          onDelete={handleDelete}
+          onReorder={editMode ? handleReorder : null}
+          onDelete={editMode ? handleDelete : null}
+          editMode={editMode}
         />
       </PhoneMockup>
       <p className="text-xs text-gray-400 mt-4">

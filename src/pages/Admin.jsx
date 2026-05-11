@@ -11,6 +11,7 @@ export default function Admin() {
   const [error, setError] = useState('')
   const [photos, setPhotos] = useState([])
   const [uploading, setUploading] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const updatingRef = useRef(false)
 
   useEffect(() => {
@@ -161,11 +162,12 @@ export default function Admin() {
         <div className="flex gap-12 items-start">
           <div className="flex-shrink-0">
             <p className="text-xs text-gray-500 mb-3 text-center">Preview</p>
-            <PhoneMockup>
+            <PhoneMockup editMode={editMode} onToggleEdit={() => setEditMode(e => !e)}>
               <PhotoGrid
                 photos={photos}
-                onReorder={handleReorder}
-                onDelete={handleDelete}
+                onReorder={editMode ? handleReorder : null}
+                onDelete={editMode ? handleDelete : null}
+                editMode={editMode}
               />
             </PhoneMockup>
           </div>

@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/sortable'
 import SortablePhoto from './SortablePhoto'
 
-export default function PhotoGrid({ photos, onReorder, onDelete }) {
+export default function PhotoGrid({ photos, onReorder, onDelete, editMode }) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -48,7 +48,7 @@ export default function PhotoGrid({ photos, onReorder, onDelete }) {
       <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-3 gap-px bg-gray-200">
           {photos.map((photo) => (
-            <SortablePhoto key={photo.id} photo={photo} onDelete={onDelete} />
+            <SortablePhoto key={photo.id} photo={photo} onDelete={onDelete} editMode={editMode} />
           ))}
         </div>
       </SortableContext>

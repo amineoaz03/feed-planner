@@ -34,6 +34,7 @@ export default function SortablePhoto({ photo, onDelete, editMode }) {
         src={photo.url}
         alt=""
         className="w-full h-full object-cover select-none"
+        loading="lazy"
         draggable={false}
       />
 

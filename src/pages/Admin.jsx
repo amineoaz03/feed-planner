@@ -5,6 +5,25 @@ import PhotoGrid from '../components/PhotoGrid'
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123'
 
+function compressImage(file, maxWidth = 1080, quality = 0.8) {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width)
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(resolve, 'image/jpeg', quality)
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 export default function Admin() {
   const [authed, setAuthed] = useState(false)
   const [password, setPassword] = useState('')
@@ -56,12 +75,12 @@ export default function Admin() {
     let nextPos = existing?.[0]?.position != null ? existing[0].position + 1 : 0
 
     for (const file of files) {
-      const ext = file.name.split('.').pop()
-      const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const compressed = await compressImage(file)
+      const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
 
       const { error: uploadError } = await supabase.storage
         .from('feed-photos')
-        .upload(storagePath, file, { cacheControl: '3600', upsert: false })
+        .upload(storagePath, compressed, { contentType: 'image/jpeg', cacheControl: '3600', upsert: false })
 
       if (uploadError) {
         console.error('Upload error:', uploadError)
@@ -179,7 +198,7 @@ export default function Admin() {
             <div className="grid grid-cols-4 gap-1">
               {photos.map((photo, i) => (
                 <div key={photo.id} className="relative group aspect-square bg-gray-100">
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1">
                     {i + 1}
                   </div>

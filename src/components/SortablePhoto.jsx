@@ -29,7 +29,7 @@ export default function SortablePhoto({ photo, onDelete, editMode }) {
   }
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group aspect-square bg-gray-100">
+    <div ref={setNodeRef} style={style} className="relative group aspect-[4/5] bg-gray-100">
       <img
         src={photo.url}
         alt=""

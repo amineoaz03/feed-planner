@@ -197,7 +197,7 @@ export default function Admin() {
             </p>
             <div className="grid grid-cols-4 gap-1">
               {photos.map((photo, i) => (
-                <div key={photo.id} className="relative group aspect-square bg-gray-100">
+                <div key={photo.id} className="relative group aspect-[4/5] bg-gray-100">
                   <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1">
                     {i + 1}

@@ -3,7 +3,7 @@ export default function PhoneMockup({ children, editMode, onToggleEdit }) {
     <div className="relative mx-auto" style={{ width: 300, height: 620 }}>
       {/* outer frame */}
       <div className="absolute inset-0 rounded-[44px] border-[10px] border-gray-900 bg-gray-900 shadow-2xl overflow-hidden">
-        {/* side buttons — decorative */}
+        {/* side buttons */}
         <div className="absolute -left-[14px] top-20 w-[4px] h-8 bg-gray-700 rounded-l" />
         <div className="absolute -left-[14px] top-32 w-[4px] h-12 bg-gray-700 rounded-l" />
         <div className="absolute -left-[14px] top-48 w-[4px] h-12 bg-gray-700 rounded-l" />

@@ -127,7 +127,7 @@ function CarouselStrip({ images = [], photoId, onUpdate }) {
       {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
       <div className="px-6 py-4 bg-purple-50/40 border-t border-purple-100">
         <p className="text-xs font-semibold text-purple-500 mb-3 uppercase tracking-wider">
-          Carousel — {images.length} slide{images.length !== 1 ? 's' : ''}
+          Carousel · {images.length} slide{images.length !== 1 ? 's' : ''}
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           {images.map((img, i) => (
@@ -255,7 +255,7 @@ return (
 
           {photos.length === 0 && (
             <div className="py-20 text-center text-sm text-gray-400">
-              No photos yet — upload from the Admin page first.
+              No photos yet. Upload from the Admin page first.
             </div>
           )}
 

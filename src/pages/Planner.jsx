@@ -218,8 +218,8 @@ export default function Planner() {
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, [field]: dbValue } : p))
     const key = id + field
     clearTimeout(timers.current[key])
+    updatingRef.current = true
     timers.current[key] = setTimeout(async () => {
-      updatingRef.current = true
       await supabase.from('photos').update({ [field]: dbValue }).eq('id', id)
       updatingRef.current = false
     }, 500)

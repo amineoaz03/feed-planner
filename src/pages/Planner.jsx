@@ -155,7 +155,7 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
   )
 }
 
-function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete }) {
+function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id })
 
   const style = {
@@ -218,16 +218,16 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
           <DatePicker
             selected={photo.date ? parseLocalDate(photo.date) : null}
             onChange={date => {
-              if (!date) { onChange(photo.id, 'date', null); return }
+              if (!date) { onFieldChange(photo.id, 'date', null); return }
               const local = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
-              onChange(photo.id, 'date', local)
+              onFieldChange(photo.id, 'date', local)
             }}
             dateFormat="dd MMM yyyy"
             popperPlacement="bottom-start"
             customInput={
               <DateChip
                 value={photo.date}
-                onClear={() => onChange(photo.id, 'date', null)}
+                onClear={() => onFieldChange(photo.id, 'date', null)}
               />
             }
           />
@@ -238,7 +238,7 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
           {isEvent && (
             <input
               value={photo.event_name || ''}
-              onChange={e => onChange(photo.id, 'event_name', e.target.value)}
+              onChange={e => onFieldChange(photo.id, 'event_name', e.target.value)}
               placeholder="Event name…"
               className="w-full text-sm bg-transparent outline-none text-red-700 font-semibold placeholder-red-200 mb-2"
             />
@@ -246,14 +246,14 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
           {isStory && (
             <input
               value={photo.event_name || ''}
-              onChange={e => onChange(photo.id, 'event_name', e.target.value)}
+              onChange={e => onFieldChange(photo.id, 'event_name', e.target.value)}
               placeholder="Story name…"
               className="w-full text-sm bg-transparent outline-none text-green-700 font-semibold placeholder-green-200 mb-2"
             />
           )}
           <textarea
             value={photo.caption || ''}
-            onChange={e => onChange(photo.id, 'caption', e.target.value)}
+            onChange={e => onFieldChange(photo.id, 'caption', e.target.value)}
             placeholder="Write your caption here…"
             rows={isEvent || isStory ? 2 : 3}
             className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
@@ -265,7 +265,7 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
           <div className={`flex items-center px-3 py-1.5 rounded-full border w-full ${TYPE_STYLES[photo.post_type] || TYPE_STYLES['Photo']}`}>
             <select
               value={photo.post_type || 'Photo'}
-              onChange={e => onChange(photo.id, 'post_type', e.target.value)}
+              onChange={e => onFieldChange(photo.id, 'post_type', e.target.value)}
               className="text-xs font-medium outline-none cursor-pointer bg-transparent flex-1"
             >
               {POST_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -279,7 +279,7 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
             <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${STATUS_DOT[photo.status] || STATUS_DOT['Draft']}`} />
             <select
               value={photo.status || 'Draft'}
-              onChange={e => onChange(photo.id, 'status', e.target.value)}
+              onChange={e => onFieldChange(photo.id, 'status', e.target.value)}
               className="text-xs font-medium outline-none cursor-pointer bg-transparent flex-1"
             >
               {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -454,7 +454,7 @@ export default function Planner() {
                   photo={photo}
                   slug={slug}
                   onZoom={setZoomed}
-                  onChange={handleChange}
+                  onFieldChange={handleChange}
                   onCarouselUpdate={handleCarouselUpdate}
                   onDelete={handleDelete}
                 />

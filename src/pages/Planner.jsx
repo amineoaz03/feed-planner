@@ -87,7 +87,7 @@ function Lightbox({ url, onClose }) {
   )
 }
 
-function CarouselStrip({ images = [], photoId, onUpdate }) {
+function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
   const [uploading, setUploading] = useState(false)
   const [zoomed, setZoomed] = useState(null)
 
@@ -342,6 +342,7 @@ return (
                 <CarouselStrip
                   images={photo.carousel_images || []}
                   photoId={photo.id}
+                  slug={slug}
                   onUpdate={(imgs) => handleCarouselUpdate(photo.id, imgs)}
                 />
               )}

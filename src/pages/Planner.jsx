@@ -266,7 +266,11 @@ return (
           )}
 
           {photos.map((photo) => (
-            <div key={photo.id} className={`border-b last:border-0 group ${photo.post_type === 'Event' ? 'border-red-100 bg-red-50/30 border-l-4 border-l-red-400' : 'border-gray-100'}`}>
+            <div key={photo.id} className={`border-b last:border-0 group ${
+              photo.post_type === 'Event' ? 'border-red-100 bg-red-50/30 border-l-4 border-l-red-400' :
+              photo.post_type === 'Story' ? 'border-green-100 bg-green-50/30 border-l-4 border-l-green-400' :
+              'border-gray-100'
+            }`}>
 
               {/* main row */}
               <div className="grid grid-cols-[88px_170px_1fr_150px_160px] min-w-[700px] hover:bg-gray-50/70 transition-colors">
@@ -301,7 +305,11 @@ return (
                 </div>
 
                 {/* caption / event name */}
-                <div className={`px-4 py-3 border-l ${photo.post_type === 'Event' ? 'border-red-100' : 'border-gray-100'}`}>
+                <div className={`px-4 py-3 border-l ${
+                  photo.post_type === 'Event' ? 'border-red-100' :
+                  photo.post_type === 'Story' ? 'border-green-100' :
+                  'border-gray-100'
+                }`}>
                   {photo.post_type === 'Event' && (
                     <input
                       value={photo.event_name || ''}
@@ -310,11 +318,19 @@ return (
                       className="w-full text-sm bg-transparent outline-none text-red-700 font-semibold placeholder-red-200 mb-2"
                     />
                   )}
+                  {photo.post_type === 'Story' && (
+                    <input
+                      value={photo.event_name || ''}
+                      onChange={e => handleChange(photo.id, 'event_name', e.target.value)}
+                      placeholder="Story name…"
+                      className="w-full text-sm bg-transparent outline-none text-green-700 font-semibold placeholder-green-200 mb-2"
+                    />
+                  )}
                   <textarea
                     value={photo.caption || ''}
                     onChange={e => handleChange(photo.id, 'caption', e.target.value)}
                     placeholder="Write your caption here…"
-                    rows={photo.post_type === 'Event' ? 2 : 3}
+                    rows={['Event', 'Story'].includes(photo.post_type) ? 2 : 3}
                     className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
                   />
                 </div>

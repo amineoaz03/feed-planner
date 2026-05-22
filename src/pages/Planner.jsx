@@ -6,6 +6,36 @@ import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/compress'
 import Nav from '../components/Nav'
 
+import { forwardRef } from 'react'
+
+const DateChip = forwardRef(({ value, onClick, onClear }, ref) => {
+  const formatted = value
+    ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
+
+  return formatted ? (
+    <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-2.5 py-1.5 w-fit">
+      <button ref={ref} onClick={onClick} className="text-xs text-gray-700 font-medium whitespace-nowrap">
+        {formatted}
+      </button>
+      <button
+        onClick={e => { e.stopPropagation(); onClear() }}
+        className="text-gray-400 hover:text-gray-700 text-xs leading-none"
+      >
+        ×
+      </button>
+    </div>
+  ) : (
+    <button
+      ref={ref}
+      onClick={onClick}
+      className="text-xs text-gray-300 hover:text-gray-500 transition-colors"
+    >
+      Add date
+    </button>
+  )
+})
+
 const POST_TYPES = ['Photo', 'Carousel', 'Video']
 
 const TYPE_STYLES = {
@@ -253,11 +283,14 @@ return (
                   <DatePicker
                     selected={photo.date ? new Date(photo.date) : null}
                     onChange={date => handleChange(photo.id, 'date', date ? date.toISOString().split('T')[0] : '')}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="dd/mm/yyyy"
-                    isClearable
-                    className="w-full text-sm bg-transparent outline-none cursor-pointer text-gray-600 focus:text-gray-900"
+                    dateFormat="dd MMM yyyy"
                     popperPlacement="bottom-start"
+                    customInput={
+                      <DateChip
+                        value={photo.date}
+                        onClear={() => handleChange(photo.id, 'date', '')}
+                      />
+                    }
                   />
                 </div>
 

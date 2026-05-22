@@ -253,8 +253,9 @@ return (
                   <DatePicker
                     selected={photo.date ? new Date(photo.date) : null}
                     onChange={date => handleChange(photo.id, 'date', date ? date.toISOString().split('T')[0] : '')}
-                    dateFormat="dd MMM yyyy"
-                    placeholderText="Pick a date"
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="dd/mm/yyyy"
+                    isClearable
                     className="w-full text-sm bg-transparent outline-none cursor-pointer text-gray-600 focus:text-gray-900"
                     popperPlacement="bottom-start"
                   />

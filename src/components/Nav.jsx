@@ -9,12 +9,18 @@ export default function Nav() {
 
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-0 flex items-center gap-1">
-      <button
-        onClick={() => navigate('/admin')}
-        className="font-bold text-sm text-gray-900 pr-5 py-4 border-r border-gray-100 mr-3 hover:text-gray-500"
-      >
-        Feed Planner
-      </button>
+      {isAdmin ? (
+        <button
+          onClick={() => navigate('/admin')}
+          className="font-bold text-sm text-gray-900 pr-5 py-4 border-r border-gray-100 mr-3 hover:text-gray-500"
+        >
+          Feed Planner
+        </button>
+      ) : (
+        <span className="font-bold text-sm text-gray-900 pr-5 py-4 border-r border-gray-100 mr-3">
+          Feed Planner
+        </span>
+      )}
       <NavLink
         to={`/${slug}`}
         end

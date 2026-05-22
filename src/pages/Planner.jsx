@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/compress'
 import Nav from '../components/Nav'
@@ -248,11 +250,13 @@ return (
 
                 {/* date */}
                 <div className="px-4 flex items-center border-l border-gray-100">
-                  <input
-                    type="date"
-                    value={photo.date || ''}
-                    onChange={e => handleChange(photo.id, 'date', e.target.value)}
+                  <DatePicker
+                    selected={photo.date ? new Date(photo.date) : null}
+                    onChange={date => handleChange(photo.id, 'date', date ? date.toISOString().split('T')[0] : '')}
+                    dateFormat="dd MMM yyyy"
+                    placeholderText="Pick a date"
                     className="w-full text-sm bg-transparent outline-none cursor-pointer text-gray-600 focus:text-gray-900"
+                    popperPlacement="bottom-start"
                   />
                 </div>
 

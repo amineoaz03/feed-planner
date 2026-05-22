@@ -148,7 +148,7 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
   )
 }
 
-function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onDelete, onReplace }) {
+function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id })
 
   const style = {
@@ -195,28 +195,13 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
 
         {/* photo */}
         <div className="px-2 py-3 flex items-center">
-          <div className="relative overflow-hidden rounded-lg shadow-sm group/photo">
-            <img
-              src={photo.url}
-              alt=""
-              loading="lazy"
-              onClick={() => onZoom(photo.url)}
-              className="w-14 h-[72px] object-cover cursor-zoom-in"
-            />
-            <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 pointer-events-none group-hover/photo:opacity-100 group-hover/photo:pointer-events-auto cursor-pointer transition-opacity">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                <polyline points="17 8 12 3 7 8"/>
-                <line x1="12" y1="3" x2="12" y2="15"/>
-              </svg>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => onReplace(photo.id, photo.storage_path, e)}
-              />
-            </label>
-          </div>
+          <img
+            src={photo.url}
+            alt=""
+            loading="lazy"
+            onClick={() => onZoom(photo.url)}
+            className="w-14 h-[72px] object-cover rounded-lg shadow-sm cursor-zoom-in"
+          />
         </div>
 
         {/* date */}
@@ -362,23 +347,6 @@ export default function Planner() {
     updatingRef.current = false
   }
 
-  async function handleReplace(id, oldStoragePath, e) {
-    const file = e.target.files[0]
-    if (!file || !client) return
-    const compressed = await compressImage(file)
-    const newPath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-    const { error } = await supabase.storage.from('feed-photos')
-      .upload(newPath, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
-    if (error) return
-    const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(newPath)
-    setPhotos(prev => prev.map(p => p.id === id ? { ...p, url: publicUrl, storage_path: newPath } : p))
-    updatingRef.current = true
-    await supabase.from('photos').update({ url: publicUrl, storage_path: newPath }).eq('id', id)
-    if (oldStoragePath) await supabase.storage.from('feed-photos').remove([oldStoragePath])
-    updatingRef.current = false
-    e.target.value = ''
-  }
-
   async function handleDelete(id, storagePath) {
     if (!confirm('Delete this row?')) return
     updatingRef.current = true
@@ -476,7 +444,6 @@ export default function Planner() {
                   onFieldChange={handleChange}
                   onCarouselUpdate={handleCarouselUpdate}
                   onDelete={handleDelete}
-                  onReplace={handleReplace}
                 />
               ))}
             </SortableContext>

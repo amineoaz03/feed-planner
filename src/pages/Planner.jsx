@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/compress'
-import { generateCaption } from '../lib/gemini'
 import Nav from '../components/Nav'
-
-const LANGUAGES = ['English', 'French', 'Spanish', 'Arabic', 'Italian']
 
 const POST_TYPES = ['Photo', 'Carousel', 'Video']
 
@@ -148,8 +145,6 @@ function CarouselStrip({ images = [], photoId, onUpdate }) {
 export default function Planner() {
   const [photos, setPhotos] = useState([])
   const [zoomed, setZoomed] = useState(null)
-  const [generating, setGenerating] = useState(null)
-  const [language, setLanguage] = useState('French')
   const timers = useRef({})
   const updatingRef = useRef(false)
 
@@ -187,20 +182,7 @@ export default function Planner() {
     handleChange(id, 'carousel_images', newImages)
   }
 
-  async function handleGenerate(id, imageUrl) {
-    setGenerating(id)
-    try {
-      const caption = await generateCaption(imageUrl, language)
-      handleChange(id, 'caption', caption)
-    } catch (err) {
-      alert('Error: ' + err.message)
-      console.error(err)
-    } finally {
-      setGenerating(null)
-    }
-  }
-
-  return (
+return (
     <div className="min-h-screen bg-gray-50">
       {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
       <Nav />
@@ -210,16 +192,7 @@ export default function Planner() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Content Planner</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400">Caption language:</span>
-            <select
-              value={language}
-              onChange={e => setLanguage(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 outline-none bg-white text-gray-700"
-            >
-              {LANGUAGES.map(l => <option key={l}>{l}</option>)}
-            </select>
-          </div>
+          <span className="text-xs text-gray-400">{photos.length} posts</span>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
@@ -277,13 +250,6 @@ export default function Planner() {
                     rows={3}
                     className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
                   />
-                  <button
-                    onClick={() => handleGenerate(photo.id, photo.url)}
-                    disabled={generating === photo.id}
-                    className="mt-1 text-xs text-gray-400 hover:text-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {generating === photo.id ? 'Generating…' : 'Generate with Gemini'}
-                  </button>
                 </div>
 
                 {/* post type */}

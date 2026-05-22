@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import PhoneMockup from '../components/PhoneMockup'
 import PhotoGrid from '../components/PhotoGrid'
+import Nav from '../components/Nav'
 
 export default function Client() {
   const [photos, setPhotos] = useState([])
@@ -52,7 +53,9 @@ export default function Client() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-gray-50">
+      <Nav />
+      <div className="flex flex-col items-center justify-center p-6">
       <h1 className="text-xl font-bold mb-6">Feed Preview</h1>
       <PhoneMockup editMode={editMode} onToggleEdit={() => setEditMode(e => !e)}>
         <PhotoGrid
@@ -65,6 +68,7 @@ export default function Client() {
       <p className="text-xs text-gray-400 mt-4">
         Drag to reorder · Hover to delete
       </p>
+      </div>
     </div>
   )
 }

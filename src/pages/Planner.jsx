@@ -11,11 +11,6 @@ const TYPE_STYLES = {
   'Video':    'bg-rose-50 text-rose-600 border-rose-200',
 }
 
-const TYPE_ICONS = {
-  'Photo':    '🖼',
-  'Carousel': '▤',
-  'Video':    '▶',
-}
 
 const STATUSES = ['Draft', 'In Review', 'Approved']
 
@@ -99,7 +94,7 @@ function CarouselStrip({ images = [], photoId, onUpdate }) {
       {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
       <div className="px-6 py-4 bg-purple-50/40 border-t border-purple-100">
         <p className="text-xs font-semibold text-purple-500 mb-3 uppercase tracking-wider">
-          Carousel · {images.length} slide{images.length !== 1 ? 's' : ''}
+          Carousel — {images.length} slide{images.length !== 1 ? 's' : ''}
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           {images.map((img, i) => (
@@ -196,7 +191,6 @@ export default function Planner() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Content Planner</h1>
-            <p className="text-sm text-gray-400 mt-1">Plan, write captions and track approval with your client.</p>
           </div>
           <span className="text-xs text-gray-400">{photos.length} posts · auto-saves</span>
         </div>
@@ -260,8 +254,7 @@ export default function Planner() {
 
                 {/* post type */}
                 <div className="px-4 flex items-center border-l border-gray-100">
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border w-full ${TYPE_STYLES[photo.post_type] || TYPE_STYLES['Photo']}`}>
-                    <span className="text-xs">{TYPE_ICONS[photo.post_type] || TYPE_ICONS['Photo']}</span>
+                  <div className={`flex items-center px-3 py-1.5 rounded-full border w-full ${TYPE_STYLES[photo.post_type] || TYPE_STYLES['Photo']}`}>
                     <select
                       value={photo.post_type || 'Photo'}
                       onChange={e => handleChange(photo.id, 'post_type', e.target.value)}
@@ -303,7 +296,6 @@ export default function Planner() {
           ))}
         </div>
 
-        <p className="text-xs text-gray-300 text-right mt-4">Changes save automatically</p>
       </div>
     </div>
   )

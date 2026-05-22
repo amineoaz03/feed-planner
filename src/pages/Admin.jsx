@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import PhoneMockup from '../components/PhoneMockup'
 import PhotoGrid from '../components/PhotoGrid'
+import Nav from '../components/Nav'
 
 import { compressImage } from '../lib/compress'
 
@@ -144,8 +145,9 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <Nav />
+      <div className="max-w-5xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-xl font-bold">Feed Planner — Admin</h1>
           <label className={`cursor-pointer px-4 py-2 text-sm border border-black ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black hover:text-white'}`}>

@@ -15,7 +15,7 @@ import Nav from '../components/Nav'
 
 const DateChip = forwardRef(({ value, onClick, onClear }, ref) => {
   const formatted = value
-    ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    ? new Date(value + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
 
   return formatted ? (
@@ -209,8 +209,12 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
         {/* date */}
         <div className="px-4 flex items-center border-l border-gray-100">
           <DatePicker
-            selected={photo.date ? new Date(photo.date) : null}
-            onChange={date => onChange(photo.id, 'date', date ? date.toISOString().split('T')[0] : null)}
+            selected={photo.date ? new Date(photo.date + 'T00:00:00') : null}
+            onChange={date => {
+              if (!date) { onChange(photo.id, 'date', null); return }
+              const local = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
+              onChange(photo.id, 'date', local)
+            }}
             dateFormat="dd MMM yyyy"
             popperPlacement="bottom-start"
             customInput={

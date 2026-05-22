@@ -3,6 +3,7 @@ import { NavLink, useParams, useNavigate } from 'react-router-dom'
 export default function Nav() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const isAdmin = sessionStorage.getItem('admin_authed') === 'true'
 
   if (!slug) return null
 
@@ -31,14 +32,16 @@ export default function Nav() {
       >
         Planner
       </NavLink>
-      <NavLink
-        to={`/admin/${slug}`}
-        className={({ isActive }) =>
-          `text-sm px-3 py-4 border-b-2 transition-colors ${isActive ? 'border-gray-900 text-gray-900 font-medium' : 'border-transparent text-gray-400 hover:text-gray-700'}`
-        }
-      >
-        Admin
-      </NavLink>
+      {isAdmin && (
+        <NavLink
+          to={`/admin/${slug}`}
+          className={({ isActive }) =>
+            `text-sm px-3 py-4 border-b-2 transition-colors ${isActive ? 'border-gray-900 text-gray-900 font-medium' : 'border-transparent text-gray-400 hover:text-gray-700'}`
+          }
+        >
+          Admin
+        </NavLink>
+      )}
     </div>
   )
 }

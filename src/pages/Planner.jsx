@@ -2,6 +2,34 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
 
+function Lightbox({ url, onClose }) {
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 w-9 h-9 bg-white text-black text-xl flex items-center justify-center rounded-full"
+      >
+        ×
+      </button>
+      <img
+        src={url}
+        alt=""
+        onClick={e => e.stopPropagation()}
+        className="max-h-[90vh] max-w-[90vw] object-contain shadow-2xl"
+      />
+    </div>
+  )
+}
+
 const STATUSES = ['Draft', 'In Review', 'Approved']
 
 const STATUS_STYLES = {
@@ -12,6 +40,7 @@ const STATUS_STYLES = {
 
 export default function Planner() {
   const [photos, setPhotos] = useState([])
+  const [zoomed, setZoomed] = useState(null)
   const timers = useRef({})
   const updatingRef = useRef(false)
 
@@ -52,6 +81,7 @@ export default function Planner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
       <Nav />
 
       <div className="max-w-7xl mx-auto p-6">
@@ -93,7 +123,8 @@ export default function Planner() {
                   src={photo.url}
                   alt=""
                   loading="lazy"
-                  className="w-14 h-[70px] object-cover"
+                  onClick={() => setZoomed(photo.url)}
+                  className="w-14 h-[70px] object-cover cursor-zoom-in"
                 />
               </div>
 

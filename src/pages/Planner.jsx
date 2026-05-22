@@ -371,11 +371,11 @@ export default function Planner() {
       .upload(newPath, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
     if (error) return
     const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(newPath)
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, url: publicUrl, storage_path: newPath } : p))
     updatingRef.current = true
     await supabase.from('photos').update({ url: publicUrl, storage_path: newPath }).eq('id', id)
     if (oldStoragePath) await supabase.storage.from('feed-photos').remove([oldStoragePath])
     updatingRef.current = false
-    fetchPhotos(client.id)
     e.target.value = ''
   }
 

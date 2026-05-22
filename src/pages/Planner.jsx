@@ -203,7 +203,7 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
               onClick={() => onZoom(photo.url)}
               className="w-14 h-[72px] object-cover cursor-zoom-in"
             />
-            <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/photo:opacity-100 cursor-pointer transition-opacity">
+            <label className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 pointer-events-none group-hover/photo:opacity-100 group-hover/photo:pointer-events-auto cursor-pointer transition-opacity">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                 <polyline points="17 8 12 3 7 8"/>

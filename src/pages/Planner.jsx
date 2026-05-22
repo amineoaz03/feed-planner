@@ -84,8 +84,6 @@ export default function Planner() {
     }, 500)
   }
 
-  const approved = photos.filter(p => p.status === 'Approved').length
-  const inReview = photos.filter(p => p.status === 'In Review').length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -100,20 +98,7 @@ export default function Planner() {
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Content Planner</h1>
             <p className="text-sm text-gray-400 mt-1">Plan, write captions and track approval with your client.</p>
           </div>
-          <div className="flex gap-3">
-            <div className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-center shadow-sm">
-              <p className="text-xl font-bold text-gray-800">{photos.length}</p>
-              <p className="text-xs text-gray-400">Posts</p>
-            </div>
-            <div className="bg-white border border-amber-200 rounded-xl px-4 py-2 text-center shadow-sm">
-              <p className="text-xl font-bold text-amber-500">{inReview}</p>
-              <p className="text-xs text-gray-400">In Review</p>
-            </div>
-            <div className="bg-white border border-emerald-200 rounded-xl px-4 py-2 text-center shadow-sm">
-              <p className="text-xl font-bold text-emerald-500">{approved}</p>
-              <p className="text-xs text-gray-400">Approved</p>
-            </div>
-          </div>
+          <span className="text-xs text-gray-400">{photos.length} posts</span>
         </div>
 
         {/* table */}

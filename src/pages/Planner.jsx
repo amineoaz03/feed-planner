@@ -193,7 +193,7 @@ export default function Planner() {
       const caption = await generateCaption(imageUrl, language)
       handleChange(id, 'caption', caption)
     } catch (err) {
-      alert('Failed to generate caption. Check your Gemini API key.')
+      alert('Error: ' + err.message)
       console.error(err)
     } finally {
       setGenerating(null)

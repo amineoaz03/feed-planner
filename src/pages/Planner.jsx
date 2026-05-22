@@ -36,15 +36,14 @@ const DateChip = forwardRef(({ value, onClick, onClear }, ref) => {
   )
 })
 
-const POST_TYPES = ['Photo', 'Carousel', 'Video', 'Story', 'Reel', 'Event']
+const POST_TYPES = ['Photo', 'Carousel', 'Reel', 'Story', 'Event']
 
 const TYPE_STYLES = {
   'Photo':    'bg-blue-50 text-blue-600 border-blue-200',
   'Carousel': 'bg-purple-50 text-purple-600 border-purple-200',
-  'Video':    'bg-rose-50 text-rose-600 border-rose-200',
-  'Story':    'bg-pink-50 text-pink-600 border-pink-200',
   'Reel':     'bg-orange-50 text-orange-600 border-orange-200',
-  'Event':    'bg-amber-50 text-amber-700 border-amber-300',
+  'Story':    'bg-pink-50 text-pink-600 border-pink-200',
+  'Event':    'bg-red-50 text-red-600 border-red-200',
 }
 
 
@@ -267,28 +266,22 @@ return (
           )}
 
           {photos.map((photo) => (
-            <div key={photo.id} className={`border-b last:border-0 group ${photo.post_type === 'Event' ? 'border-amber-100 bg-amber-50/40 border-l-4 border-l-amber-400' : 'border-gray-100'}`}>
+            <div key={photo.id} className={`border-b last:border-0 group ${photo.post_type === 'Event' ? 'border-red-100 bg-red-50/30 border-l-4 border-l-red-400' : 'border-gray-100'}`}>
 
               {/* main row */}
               <div className="grid grid-cols-[88px_170px_1fr_150px_160px] min-w-[700px] hover:bg-gray-50/70 transition-colors">
 
                 {/* photo */}
                 <div className="px-3 py-3 flex items-center">
-                  {photo.post_type === 'Event' ? (
-                    <div className="w-14 h-[72px] rounded-lg bg-amber-100 flex items-center justify-center">
-                      <span className="text-amber-400 text-xl">★</span>
-                    </div>
-                  ) : (
-                    <div className="relative overflow-hidden rounded-lg shadow-sm">
-                      <img
-                        src={photo.url}
-                        alt=""
-                        loading="lazy"
-                        onClick={() => setZoomed(photo.url)}
-                        className="w-14 h-[72px] object-cover cursor-zoom-in hover:scale-105 transition-transform duration-200"
-                      />
-                    </div>
-                  )}
+                  <div className="relative overflow-hidden rounded-lg shadow-sm">
+                    <img
+                      src={photo.url}
+                      alt=""
+                      loading="lazy"
+                      onClick={() => setZoomed(photo.url)}
+                      className="w-14 h-[72px] object-cover cursor-zoom-in hover:scale-105 transition-transform duration-200"
+                    />
+                  </div>
                 </div>
 
                 {/* date */}
@@ -308,26 +301,22 @@ return (
                 </div>
 
                 {/* caption / event name */}
-                <div className={`px-4 py-3 border-l ${photo.post_type === 'Event' ? 'border-amber-100' : 'border-gray-100'}`}>
-                  {photo.post_type === 'Event' ? (
-                    <div>
-                      <p className="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1.5">Event Name</p>
-                      <input
-                        value={photo.event_name || ''}
-                        onChange={e => handleChange(photo.id, 'event_name', e.target.value)}
-                        placeholder="Name of the event…"
-                        className="w-full text-sm bg-transparent outline-none text-gray-800 font-medium placeholder-amber-200"
-                      />
-                    </div>
-                  ) : (
-                    <textarea
-                      value={photo.caption || ''}
-                      onChange={e => handleChange(photo.id, 'caption', e.target.value)}
-                      placeholder="Write your caption here…"
-                      rows={3}
-                      className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
+                <div className={`px-4 py-3 border-l ${photo.post_type === 'Event' ? 'border-red-100' : 'border-gray-100'}`}>
+                  {photo.post_type === 'Event' && (
+                    <input
+                      value={photo.event_name || ''}
+                      onChange={e => handleChange(photo.id, 'event_name', e.target.value)}
+                      placeholder="Event name…"
+                      className="w-full text-sm bg-transparent outline-none text-red-700 font-semibold placeholder-red-200 mb-2"
                     />
                   )}
+                  <textarea
+                    value={photo.caption || ''}
+                    onChange={e => handleChange(photo.id, 'caption', e.target.value)}
+                    placeholder="Write your caption here…"
+                    rows={photo.post_type === 'Event' ? 2 : 3}
+                    className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
+                  />
                 </div>
 
                 {/* post type */}

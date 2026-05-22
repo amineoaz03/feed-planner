@@ -1,50 +1,54 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import PhoneMockup from '../components/PhoneMockup'
 import PhotoGrid from '../components/PhotoGrid'
 import Nav from '../components/Nav'
-
 import { compressImage } from '../lib/compress'
 
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123'
-
 export default function Admin() {
-  const [authed, setAuthed] = useState(false)
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const authed = sessionStorage.getItem('admin_authed') === 'true'
+
+  const [client, setClient] = useState(null)
   const [photos, setPhotos] = useState([])
   const [uploading, setUploading] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const updatingRef = useRef(false)
 
   useEffect(() => {
-    if (!authed) return
+    if (!authed) { navigate('/admin'); return }
+    fetchClient()
+  }, [slug])
 
-    fetchPhotos()
+  async function fetchClient() {
+    const { data } = await supabase.from('clients').select('*').eq('slug', slug).single()
+    if (!data) { navigate('/admin'); return }
+    setClient(data)
+    fetchPhotos(data.id)
 
     const channel = supabase
-      .channel('admin-photos')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'photos' },
-        () => {
-          if (!updatingRef.current) fetchPhotos()
-        }
+      .channel(`admin-${slug}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'photos' },
+        () => { if (!updatingRef.current) fetchPhotos(data.id) }
       )
       .subscribe()
 
     return () => supabase.removeChannel(channel)
-  }, [authed])
+  }
 
-  async function fetchPhotos() {
+  async function fetchPhotos(clientId) {
     const { data } = await supabase
       .from('photos')
       .select('*')
+      .eq('client_id', clientId)
       .order('position', { ascending: true })
     setPhotos(data || [])
   }
 
   async function handleUpload(e) {
+    if (!client) return
     const files = Array.from(e.target.files)
     if (!files.length) return
     setUploading(true)
@@ -53,6 +57,7 @@ export default function Admin() {
     const { data: existing } = await supabase
       .from('photos')
       .select('position')
+      .eq('client_id', client.id)
       .order('position', { ascending: false })
       .limit(1)
 
@@ -60,112 +65,58 @@ export default function Admin() {
 
     for (const file of files) {
       const compressed = await compressImage(file)
-      const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-
+      const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
       const { error: uploadError } = await supabase.storage
         .from('feed-photos')
         .upload(storagePath, compressed, { contentType: 'image/jpeg', cacheControl: '3600', upsert: false })
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError)
-        continue
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('feed-photos')
-        .getPublicUrl(storagePath)
-
-      await supabase.from('photos').insert({
-        url: publicUrl,
-        storage_path: storagePath,
-        position: nextPos++,
-      })
+      if (uploadError) continue
+      const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, position: nextPos++, client_id: client.id })
     }
 
     e.target.value = ''
     setUploading(false)
     updatingRef.current = false
-    fetchPhotos()
+    fetchPhotos(client.id)
   }
 
   async function handleReorder(reordered) {
     setPhotos(reordered)
     updatingRef.current = true
-    await Promise.all(
-      reordered.map((photo, index) =>
-        supabase.from('photos').update({ position: index }).eq('id', photo.id)
-      )
-    )
+    await Promise.all(reordered.map((photo, index) =>
+      supabase.from('photos').update({ position: index }).eq('id', photo.id)
+    ))
     updatingRef.current = false
   }
 
   async function handleDelete(id, storagePath) {
     updatingRef.current = true
     await supabase.from('photos').delete().eq('id', id)
-    if (storagePath) {
-      await supabase.storage.from('feed-photos').remove([storagePath])
-    }
+    if (storagePath) await supabase.storage.from('feed-photos').remove([storagePath])
     updatingRef.current = false
-    fetchPhotos()
+    fetchPhotos(client.id)
   }
 
-  function handleLogin() {
-    if (password === ADMIN_PASSWORD) {
-      setAuthed(true)
-      setError('')
-    } else {
-      setError('Wrong password')
-    }
-  }
-
-  if (!authed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white border border-gray-200 p-8 w-80">
-          <h1 className="text-lg font-bold mb-6">Admin Login</h1>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-            className="border border-gray-300 p-2 w-full mb-2 text-sm outline-none focus:border-gray-500"
-            placeholder="Password"
-            autoFocus
-          />
-          {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
-          <button
-            onClick={handleLogin}
-            className="bg-black text-white px-4 py-2 w-full text-sm hover:bg-gray-800"
-          >
-            Login
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (!client) return null
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Nav />
       <div className="max-w-5xl mx-auto p-6">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-xl font-bold">Feed Planner — Admin</h1>
-          <label className={`cursor-pointer px-4 py-2 text-sm border border-black ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black hover:text-white'}`}>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{client.name}</h1>
+            <p className="text-xs text-gray-400 mt-0.5">{photos.length} photos</p>
+          </div>
+          <label className={`cursor-pointer px-4 py-2 text-sm rounded-xl border border-gray-900 ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900 hover:text-white'} transition-colors`}>
             {uploading ? 'Uploading…' : 'Upload Photos'}
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handleUpload}
-              disabled={uploading}
-            />
+            <input type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
         </div>
 
         <div className="flex gap-12 items-start">
           <div className="flex-shrink-0">
-            <p className="text-xs text-gray-500 mb-3 text-center">Preview</p>
+            <p className="text-xs text-gray-400 mb-3 text-center">Preview</p>
             <PhoneMockup editMode={editMode} onToggleEdit={() => setEditMode(e => !e)}>
               <PhotoGrid
                 photos={photos}
@@ -177,28 +128,20 @@ export default function Admin() {
           </div>
 
           <div className="flex-1">
-            <p className="text-xs text-gray-500 mb-3">
-              {photos.length} photo{photos.length !== 1 ? 's' : ''} in feed
-            </p>
+            <p className="text-xs text-gray-400 mb-3">{photos.length} photo{photos.length !== 1 ? 's' : ''}</p>
             <div className="grid grid-cols-4 gap-1">
               {photos.map((photo, i) => (
                 <div key={photo.id} className="relative group aspect-[4/5] bg-gray-100">
                   <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1">
-                    {i + 1}
-                  </div>
+                  <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1">{i + 1}</div>
                   <button
                     onClick={() => handleDelete(photo.id, photo.storage_path)}
                     className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100"
-                  >
-                    ×
-                  </button>
+                  >×</button>
                 </div>
               ))}
             </div>
-            {photos.length === 0 && (
-              <p className="text-sm text-gray-400">Upload photos to get started.</p>
-            )}
+            {photos.length === 0 && <p className="text-sm text-gray-400">Upload photos to get started.</p>}
           </div>
         </div>
       </div>

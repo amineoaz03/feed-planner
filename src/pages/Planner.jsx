@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/compress'
 import Nav from '../components/Nav'
@@ -66,7 +67,7 @@ function CarouselStrip({ images = [], photoId, onUpdate }) {
     const newImages = [...images]
     for (const file of files) {
       const compressed = await compressImage(file)
-      const path = `carousel/${photoId}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      const path = `${slug}/carousel/${photoId}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
       const { error } = await supabase.storage
         .from('feed-photos')
         .upload(path, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
@@ -143,26 +144,39 @@ function CarouselStrip({ images = [], photoId, onUpdate }) {
 }
 
 export default function Planner() {
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const [client, setClient] = useState(null)
   const [photos, setPhotos] = useState([])
   const [zoomed, setZoomed] = useState(null)
   const timers = useRef({})
   const updatingRef = useRef(false)
 
   useEffect(() => {
-    fetchPhotos()
+    fetchClient()
+  }, [slug])
+
+  async function fetchClient() {
+    const { data } = await supabase.from('clients').select('*').eq('slug', slug).single()
+    if (!data) { navigate('/admin'); return }
+    setClient(data)
+    fetchPhotos(data.id)
+
     const channel = supabase
-      .channel('planner-photos')
+      .channel(`planner-${slug}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'photos' },
-        () => { if (!updatingRef.current) fetchPhotos() }
+        () => { if (!updatingRef.current) fetchPhotos(data.id) }
       )
       .subscribe()
-    return () => supabase.removeChannel(channel)
-  }, [])
 
-  async function fetchPhotos() {
+    return () => supabase.removeChannel(channel)
+  }
+
+  async function fetchPhotos(clientId) {
     const { data } = await supabase
       .from('photos')
       .select('*')
+      .eq('client_id', clientId)
       .order('position', { ascending: true })
     setPhotos(data || [])
   }
@@ -191,6 +205,7 @@ return (
         <div className="flex items-end justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Content Planner</h1>
+            {client && <p className="text-sm text-gray-400 mt-1">{client.name}</p>}
           </div>
           <span className="text-xs text-gray-400">{photos.length} posts</span>
         </div>

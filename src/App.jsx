@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import AdminDashboard from './pages/AdminDashboard'
 import Admin from './pages/Admin'
 import Client from './pages/Client'
 import Planner from './pages/Planner'
@@ -7,9 +8,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Client />} />
-        <Route path="/planner" element={<Planner />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/" element={<Navigate to="/admin" replace />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/:slug" element={<Admin />} />
+        <Route path="/planner/:slug" element={<Planner />} />
+        <Route path="/:slug" element={<Client />} />
       </Routes>
     </BrowserRouter>
   )

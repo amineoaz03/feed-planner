@@ -214,18 +214,22 @@ export default function Planner() {
   }
 
   function handleChange(id, field, value) {
-    setPhotos(prev => prev.map(p => p.id === id ? { ...p, [field]: value } : p))
+    const dbValue = value === '' ? null : value
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, [field]: dbValue } : p))
     const key = id + field
     clearTimeout(timers.current[key])
     timers.current[key] = setTimeout(async () => {
       updatingRef.current = true
-      await supabase.from('photos').update({ [field]: value }).eq('id', id)
+      await supabase.from('photos').update({ [field]: dbValue }).eq('id', id)
       updatingRef.current = false
     }, 500)
   }
 
-  function handleCarouselUpdate(id, newImages) {
-    handleChange(id, 'carousel_images', newImages)
+  async function handleCarouselUpdate(id, newImages) {
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, carousel_images: newImages } : p))
+    updatingRef.current = true
+    await supabase.from('photos').update({ carousel_images: newImages }).eq('id', id)
+    updatingRef.current = false
   }
 
 return (
@@ -288,7 +292,7 @@ return (
                     customInput={
                       <DateChip
                         value={photo.date}
-                        onClear={() => handleChange(photo.id, 'date', '')}
+                        onClear={() => handleChange(photo.id, 'date', null)}
                       />
                     }
                   />

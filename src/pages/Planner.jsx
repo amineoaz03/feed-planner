@@ -137,7 +137,7 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
   )
 }
 
-function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate }) {
+function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id })
 
   const style = {
@@ -155,7 +155,7 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`border-b last:border-0 group ${
+      className={`border-b last:border-0 group relative ${
         isEvent ? 'border-red-100 bg-red-50/30 border-l-4 border-l-red-400' :
         isStory ? 'border-green-100 bg-green-50/30 border-l-4 border-l-green-400' :
         'border-gray-100'
@@ -257,6 +257,14 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate }) {
         </div>
       </div>
 
+      {/* delete button */}
+      <button
+        onClick={() => onDelete(photo.id, photo.storage_path)}
+        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+      >
+        ×
+      </button>
+
       {photo.post_type === 'Carousel' && (
         <CarouselStrip
           images={photo.carousel_images || []}
@@ -327,6 +335,15 @@ export default function Planner() {
     updatingRef.current = true
     await supabase.from('photos').update({ carousel_images: newImages }).eq('id', id)
     updatingRef.current = false
+  }
+
+  async function handleDelete(id, storagePath) {
+    if (!confirm('Delete this row?')) return
+    updatingRef.current = true
+    await supabase.from('photos').delete().eq('id', id)
+    if (storagePath) await supabase.storage.from('feed-photos').remove([storagePath])
+    updatingRef.current = false
+    if (client) fetchPhotos(client.id)
   }
 
   async function handleDragEnd({ active, over }) {
@@ -416,6 +433,7 @@ export default function Planner() {
                   onZoom={setZoomed}
                   onChange={handleChange}
                   onCarouselUpdate={handleCarouselUpdate}
+                  onDelete={handleDelete}
                 />
               ))}
             </SortableContext>

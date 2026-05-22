@@ -44,6 +44,17 @@ function GripIcon() {
   )
 }
 
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14H6L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+      <path d="M9 6V4h6v2"/>
+    </svg>
+  )
+}
+
 const POST_TYPES = ['Photo', 'Carousel', 'Reel', 'Story', 'Event']
 
 const TYPE_STYLES = {
@@ -163,14 +174,23 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
     >
       <div className="grid grid-cols-[32px_88px_170px_1fr_150px_160px] min-w-[750px] hover:bg-black/[0.01] transition-colors">
 
-        {/* drag handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
-          className="flex items-center justify-center text-gray-300 hover:text-gray-500"
-        >
-          <GripIcon />
+        {/* drag handle + delete */}
+        <div className="flex flex-col items-center justify-center gap-2 py-2">
+          <div
+            {...attributes}
+            {...listeners}
+            style={{ touchAction: 'none', cursor: isDragging ? 'grabbing' : 'grab' }}
+            className="text-gray-300 hover:text-gray-500 transition-colors"
+          >
+            <GripIcon />
+          </div>
+          <button
+            onPointerDown={e => e.stopPropagation()}
+            onClick={() => onDelete(photo.id, photo.storage_path)}
+            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <TrashIcon />
+          </button>
         </div>
 
         {/* photo */}
@@ -256,14 +276,6 @@ function SortableRow({ photo, slug, onZoom, onChange, onCarouselUpdate, onDelete
           </div>
         </div>
       </div>
-
-      {/* delete button */}
-      <button
-        onClick={() => onDelete(photo.id, photo.storage_path)}
-        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-100 text-red-400 hover:bg-red-500 hover:text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
-      >
-        ×
-      </button>
 
       {photo.post_type === 'Carousel' && (
         <CarouselStrip

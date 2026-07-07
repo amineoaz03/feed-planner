@@ -101,7 +101,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
 
   return (
     <div ref={setNodeRef} style={style} className="border-b last:border-0 group relative border-gray-100">
-      <div className="grid grid-cols-[32px_100px_1fr_1fr_160px] min-w-[680px] hover:bg-black/[0.01] transition-colors items-center">
+      <div className="grid grid-cols-[32px_180px_1fr_1fr_160px] min-w-[720px] hover:bg-black/[0.01] transition-colors items-center">
 
         {/* drag + delete */}
         <div className="flex flex-col items-center justify-center gap-2 py-2">
@@ -122,18 +122,24 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           </button>
         </div>
 
-        {/* thumbnail */}
-        <div className="px-2 py-3 flex items-center">
-          <VideoThumbnail url={video.url} />
-        </div>
-
         {/* title */}
         <div className="px-4 py-3 border-l border-gray-100">
           <input
             value={video.title || ''}
             onChange={e => onFieldChange(video.id, 'title', e.target.value)}
             placeholder="Video title…"
-            className="w-full text-sm bg-transparent outline-none text-gray-700 placeholder-gray-300"
+            className="w-full text-sm bg-transparent outline-none text-gray-700 font-medium placeholder-gray-300"
+          />
+        </div>
+
+        {/* caption */}
+        <div className="px-4 py-3 border-l border-gray-100">
+          <textarea
+            value={video.caption || ''}
+            onChange={e => onFieldChange(video.id, 'caption', e.target.value)}
+            placeholder="Write your caption here…"
+            rows={2}
+            className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed"
           />
         </div>
 
@@ -142,7 +148,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           <input
             value={video.url || ''}
             onChange={e => onFieldChange(video.id, 'url', e.target.value)}
-            placeholder="Paste link (YouTube, Instagram…)"
+            placeholder="Paste link (YouTube, Drive…)"
             className="w-full text-sm bg-transparent outline-none text-gray-500 placeholder-gray-300"
           />
           {video.url && (
@@ -281,10 +287,10 @@ export default function Videos() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
 
           {/* header */}
-          <div className="grid grid-cols-[32px_100px_1fr_1fr_160px] min-w-[680px] bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-[32px_180px_1fr_1fr_160px] min-w-[720px] bg-gray-50 border-b border-gray-200">
             <div />
-            <div className="px-2 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Preview</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Title</div>
+            <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Caption</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Link</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</div>
           </div>

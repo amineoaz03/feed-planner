@@ -162,6 +162,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
             onChange={date => onFieldChange(video.id, 'date', date ? date.toISOString().split('T')[0] : null)}
             dateFormat="dd MMM yyyy"
             popperPlacement="bottom-start"
+            popperProps={{ strategy: 'fixed' }}
             customInput={
               <DateChip
                 value={video.date}

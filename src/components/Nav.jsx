@@ -38,6 +38,14 @@ export default function Nav() {
       >
         Planner
       </NavLink>
+      <NavLink
+        to={`/videos/${slug}`}
+        className={({ isActive }) =>
+          `text-sm px-3 py-4 border-b-2 transition-colors ${isActive ? 'border-gray-900 text-gray-900 font-medium' : 'border-transparent text-gray-400 hover:text-gray-700'}`
+        }
+      >
+        Videos
+      </NavLink>
       {isAdmin && (
         <NavLink
           to={`/admin/${slug}`}

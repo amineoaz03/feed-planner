@@ -145,6 +145,16 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           </button>
         </div>
 
+        {/* title */}
+        <div className="px-4 py-3 border-l border-gray-100">
+          <input
+            value={video.title || ''}
+            onChange={e => onFieldChange(video.id, 'title', e.target.value)}
+            placeholder="Video title…"
+            className="w-full text-sm bg-transparent outline-none text-gray-700 font-medium placeholder-gray-300"
+          />
+        </div>
+
         {/* date */}
         <div className="px-4 flex items-center border-l border-gray-100">
           <DatePicker
@@ -158,16 +168,6 @@ function SortableRow({ video, onFieldChange, onDelete }) {
                 onClear={() => onFieldChange(video.id, 'date', null)}
               />
             }
-          />
-        </div>
-
-        {/* title */}
-        <div className="px-4 py-3 border-l border-gray-100">
-          <input
-            value={video.title || ''}
-            onChange={e => onFieldChange(video.id, 'title', e.target.value)}
-            placeholder="Video title…"
-            className="w-full text-sm bg-transparent outline-none text-gray-700 font-medium placeholder-gray-300"
           />
         </div>
 

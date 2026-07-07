@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -9,6 +11,27 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '../lib/supabase'
 import Nav from '../components/Nav'
+
+const DateChip = forwardRef(({ value, onClick, onClear }, ref) => {
+  const formatted = value
+    ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
+
+  return formatted ? (
+    <div className="flex items-center gap-1.5 bg-gray-100 rounded-lg px-2.5 py-1.5 w-fit">
+      <button ref={ref} onClick={onClick} className="text-xs text-gray-700 font-medium whitespace-nowrap">
+        {formatted}
+      </button>
+      <button onClick={e => { e.stopPropagation(); onClear() }} className="text-gray-400 hover:text-gray-700 text-xs leading-none">
+        ×
+      </button>
+    </div>
+  ) : (
+    <button ref={ref} onClick={onClick} className="text-xs text-gray-300 hover:text-gray-500 transition-colors">
+      Add date
+    </button>
+  )
+})
 
 const STATUSES = ['Draft', 'In Review', 'Approved']
 
@@ -101,7 +124,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
 
   return (
     <div ref={setNodeRef} style={style} className="border-b last:border-0 group relative border-gray-100">
-      <div className="grid grid-cols-[32px_180px_1fr_1fr_160px] min-w-[720px] hover:bg-black/[0.01] transition-colors items-center">
+      <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_160px] min-w-[880px] hover:bg-black/[0.01] transition-colors items-center">
 
         {/* drag + delete */}
         <div className="flex flex-col items-center justify-center gap-2 py-2">
@@ -120,6 +143,22 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           >
             <TrashIcon />
           </button>
+        </div>
+
+        {/* date */}
+        <div className="px-4 flex items-center border-l border-gray-100">
+          <DatePicker
+            selected={video.date ? new Date(video.date) : null}
+            onChange={date => onFieldChange(video.id, 'date', date ? date.toISOString().split('T')[0] : null)}
+            dateFormat="dd MMM yyyy"
+            popperPlacement="bottom-start"
+            customInput={
+              <DateChip
+                value={video.date}
+                onClear={() => onFieldChange(video.id, 'date', null)}
+              />
+            }
+          />
         </div>
 
         {/* title */}
@@ -287,9 +326,10 @@ export default function Videos() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
 
           {/* header */}
-          <div className="grid grid-cols-[32px_180px_1fr_1fr_160px] min-w-[720px] bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_160px] min-w-[880px] bg-gray-50 border-b border-gray-200">
             <div />
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Title</div>
+            <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Caption</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Link</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</div>

@@ -68,6 +68,14 @@ function TrashIcon() {
   )
 }
 
+function CommentIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+    </svg>
+  )
+}
+
 function getYoutubeThumbnail(url) {
   const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
   return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null
@@ -113,6 +121,7 @@ function VideoThumbnail({ url }) {
 
 function SortableRow({ video, onFieldChange, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: video.id })
+  const [showComments, setShowComments] = useState(false)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -142,6 +151,14 @@ function SortableRow({ video, onFieldChange, onDelete }) {
             className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
           >
             <TrashIcon />
+          </button>
+          <button
+            onPointerDown={e => e.stopPropagation()}
+            onClick={() => setShowComments(v => !v)}
+            className="relative text-gray-300 hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <CommentIcon />
+            {video.comments && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />}
           </button>
         </div>
 
@@ -216,6 +233,19 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           </div>
         </div>
       </div>
+
+      {showComments && (
+        <div className="px-6 py-3 bg-blue-50/40 border-t border-blue-100">
+          <p className="text-xs font-semibold text-blue-400 mb-2 uppercase tracking-wider">Client feedback</p>
+          <textarea
+            value={video.comments || ''}
+            onChange={e => onFieldChange(video.id, 'comments', e.target.value)}
+            placeholder="Leave a comment or feedback…"
+            rows={2}
+            className="w-full text-sm bg-white border border-blue-100 rounded-lg px-3 py-2 outline-none resize-none text-gray-700 placeholder-gray-300 leading-relaxed focus:border-blue-300"
+          />
+        </div>
+      )}
     </div>
   )
 }

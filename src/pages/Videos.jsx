@@ -155,7 +155,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
           <button
             onPointerDown={e => e.stopPropagation()}
             onClick={() => setShowComments(v => !v)}
-            className="relative text-gray-300 hover:text-blue-500 transition-colors opacity-0 group-hover:opacity-100"
+            className={`relative transition-colors ${showComments ? 'text-blue-500' : 'text-gray-300 hover:text-blue-500'}`}
           >
             <CommentIcon />
             {video.comments && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-blue-500 rounded-full" />}

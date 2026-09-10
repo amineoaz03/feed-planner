@@ -407,11 +407,15 @@ export default function Planner() {
     updatingRef.current = true
 
     const { data: existing } = await supabase
-      .from('photos').select('position').eq('client_id', client.id)
-      .order('position', { ascending: false }).limit(1)
+      .from('photos').select('id, position').eq('client_id', client.id)
 
-    let nextPos = existing?.[0]?.position != null ? existing[0].position + 1 : 0
+    if (existing?.length) {
+      await Promise.all(existing.map(p =>
+        supabase.from('photos').update({ position: p.position + files.length }).eq('id', p.id)
+      ))
+    }
 
+    let insertPos = 0
     for (const file of files) {
       const compressed = await compressImage(file)
       const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
@@ -419,7 +423,7 @@ export default function Planner() {
         .upload(storagePath, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
       if (error) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
-      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, position: nextPos++, client_id: client.id })
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, position: insertPos++, client_id: client.id })
     }
 
     e.target.value = ''

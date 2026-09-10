@@ -327,10 +327,13 @@ export default function Videos() {
     if (!client) return
     setAdding(true)
     const { data: existing } = await supabase
-      .from('videos').select('position').eq('client_id', client.id)
-      .order('position', { ascending: false }).limit(1)
-    const nextPos = existing?.[0]?.position != null ? existing[0].position + 1 : 0
-    await supabase.from('videos').insert({ client_id: client.id, position: nextPos, title: '', url: '', status: 'Draft' })
+      .from('videos').select('id, position').eq('client_id', client.id)
+    if (existing?.length) {
+      await Promise.all(existing.map(v =>
+        supabase.from('videos').update({ position: v.position + 1 }).eq('id', v.id)
+      ))
+    }
+    await supabase.from('videos').insert({ client_id: client.id, position: 0, title: '', url: '', status: 'Draft' })
     setAdding(false)
     fetchVideos(client.id)
   }

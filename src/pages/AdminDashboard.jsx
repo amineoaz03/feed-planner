@@ -21,10 +21,18 @@ export default function AdminDashboard() {
   const [creating, setCreating] = useState(false)
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+
+  const [staff, setStaff] = useState([])
+  const [staffAssignments, setStaffAssignments] = useState({})
+  const [newStaffName, setNewStaffName] = useState('')
+  const [newStaffPassword, setNewStaffPassword] = useState('')
+  const [creatingStaff, setCreatingStaff] = useState(false)
+  const [expandedStaffId, setExpandedStaffId] = useState(null)
+
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (authed) fetchClients()
+    if (authed) { fetchClients(); fetchStaff() }
   }, [authed])
 
   async function fetchClients() {
@@ -33,6 +41,54 @@ export default function AdminDashboard() {
       .select('*, photos(count)')
       .order('created_at', { ascending: true })
     setClients(data || [])
+  }
+
+  async function fetchStaff() {
+    const { data } = await supabase
+      .from('staff')
+      .select('*')
+      .order('created_at', { ascending: true })
+    setStaff(data || [])
+
+    const { data: assignments } = await supabase
+      .from('staff_clients')
+      .select('staff_id, client_id')
+    const map = {}
+    for (const a of assignments || []) {
+      if (!map[a.staff_id]) map[a.staff_id] = new Set()
+      map[a.staff_id].add(a.client_id)
+    }
+    setStaffAssignments(map)
+  }
+
+  async function handleCreateStaff() {
+    if (!newStaffName.trim() || !newStaffPassword.trim()) return
+    setCreatingStaff(true)
+    const { error } = await supabase.from('staff').insert({ name: newStaffName.trim(), password: newStaffPassword })
+    if (error) {
+      alert(error.message)
+    } else {
+      setNewStaffName('')
+      setNewStaffPassword('')
+      fetchStaff()
+    }
+    setCreatingStaff(false)
+  }
+
+  async function handleDeleteStaff(id) {
+    if (!confirm('Remove this staff member?')) return
+    await supabase.from('staff').delete().eq('id', id)
+    fetchStaff()
+  }
+
+  async function toggleAssignment(staffId, clientId) {
+    const assigned = staffAssignments[staffId]?.has(clientId)
+    if (assigned) {
+      await supabase.from('staff_clients').delete().eq('staff_id', staffId).eq('client_id', clientId)
+    } else {
+      await supabase.from('staff_clients').insert({ staff_id: staffId, client_id: clientId })
+    }
+    fetchStaff()
   }
 
   function handleLogin() {
@@ -193,6 +249,97 @@ export default function AdminDashboard() {
               className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm hover:bg-gray-700 disabled:opacity-40"
             >
               {creating ? 'Creating…' : 'Create'}
+            </button>
+          </div>
+        </div>
+
+        {/* team */}
+        <div className="flex items-center justify-between mt-12 mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Team</h2>
+          <span className="text-sm text-gray-400">{staff.length} member{staff.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        <div className="space-y-3 mb-8">
+          {staff.map(member => {
+            const assignedIds = staffAssignments[member.id] || new Set()
+            const isExpanded = expandedStaffId === member.id
+            return (
+              <div key={member.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-5 py-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-sm font-bold text-indigo-500 flex-shrink-0">
+                    {member.name[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-gray-900">{member.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{assignedIds.size} client{assignedIds.size !== 1 ? 's' : ''} assigned</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setExpandedStaffId(isExpanded ? null : member.id)}
+                      className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:border-gray-400"
+                    >
+                      {isExpanded ? 'Close' : 'Assign clients'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteStaff(member.id)}
+                      className="text-xs px-3 py-1.5 border border-red-200 rounded-lg text-red-400 hover:border-red-400"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-100 px-5 py-4 bg-gray-50">
+                    <p className="text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Assigned clients</p>
+                    <div className="space-y-2">
+                      {clients.map(client => (
+                        <label key={client.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={assignedIds.has(client.id)}
+                            onChange={() => toggleAssignment(member.id, client.id)}
+                            className="rounded border-gray-300"
+                          />
+                          {client.name}
+                        </label>
+                      ))}
+                      {clients.length === 0 && <p className="text-xs text-gray-400">No clients to assign yet.</p>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {staff.length === 0 && (
+            <p className="text-sm text-gray-400 text-center py-8">No staff yet. Add your first team member below.</p>
+          )}
+        </div>
+
+        {/* create new staff */}
+        <div className="bg-white border border-gray-200 rounded-2xl px-5 py-4 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 mb-3">New staff member</p>
+          <div className="flex gap-3">
+            <input
+              value={newStaffName}
+              onChange={e => setNewStaffName(e.target.value)}
+              placeholder="Name"
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-400"
+            />
+            <input
+              value={newStaffPassword}
+              onChange={e => setNewStaffPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateStaff()}
+              placeholder="Password"
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-gray-400"
+            />
+            <button
+              onClick={handleCreateStaff}
+              disabled={creatingStaff || !newStaffName.trim() || !newStaffPassword.trim()}
+              className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm hover:bg-gray-700 disabled:opacity-40"
+            >
+              {creatingStaff ? 'Adding…' : 'Add'}
             </button>
           </div>
         </div>

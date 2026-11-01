@@ -6,7 +6,7 @@ import {
   DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
 import {
-  SortableContext, verticalListSortingStrategy, arrayMove, useSortable,
+  SortableContext, verticalListSortingStrategy, horizontalListSortingStrategy, arrayMove, useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '../lib/supabase'
@@ -87,7 +87,7 @@ const STATUS_DOT = {
   'Approved':  'bg-emerald-400',
 }
 
-function Lightbox({ url, onClose }) {
+function Lightbox({ url, type, onClose }) {
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -97,7 +97,66 @@ function Lightbox({ url, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
       <button onClick={onClose} className="absolute top-5 right-5 w-9 h-9 bg-white/10 hover:bg-white/20 text-white text-xl flex items-center justify-center rounded-full border border-white/20">×</button>
-      <img src={url} alt="" onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] object-contain rounded-lg shadow-2xl" />
+      {type === 'video' ? (
+        <video src={url} controls autoPlay onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] rounded-lg shadow-2xl" />
+      ) : (
+        <img src={url} alt="" onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] object-contain rounded-lg shadow-2xl" />
+      )}
+    </div>
+  )
+}
+
+function PlayIcon() {
+  return (
+    <svg width="8" height="8" viewBox="0 0 8 8" fill="#7c3aed">
+      <polygon points="2,1 7,4 2,7"/>
+    </svg>
+  )
+}
+
+function CarouselSlide({ img, index, onZoom, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: img.path })
+  const isVideo = img.type === 'video'
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 10 : 'auto',
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="relative group flex-shrink-0 cursor-grab active:cursor-grabbing"
+    >
+      <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full z-10">{index + 1}</div>
+      {isVideo ? (
+        <div onClick={() => onZoom(img)} className="relative w-16 h-20 rounded-lg overflow-hidden shadow-sm hover:scale-105 transition-transform duration-200">
+          <video src={img.url} className="w-full h-full object-cover" muted />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
+              <PlayIcon />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <img
+          src={img.url}
+          alt=""
+          loading="lazy"
+          onClick={() => onZoom(img)}
+          className="w-16 h-20 object-cover rounded-lg cursor-zoom-in shadow-sm hover:scale-105 transition-transform duration-200"
+        />
+      )}
+      <button
+        onPointerDown={e => e.stopPropagation()}
+        onClick={() => onRemove(index)}
+        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 z-10"
+      >×</button>
     </div>
   )
 }
@@ -106,18 +165,32 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
   const [uploading, setUploading] = useState(false)
   const [zoomed, setZoomed] = useState(null)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  )
+
   async function handleUpload(e) {
     const files = Array.from(e.target.files)
     if (!files.length) return
     setUploading(true)
     const newImages = [...images]
     for (const file of files) {
-      const compressed = await compressImage(file)
-      const path = `${slug}/carousel/${photoId}-${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-      const { error } = await supabase.storage.from('feed-photos').upload(path, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
+      const isVideo = file.type.startsWith('video/')
+      let uploadFile = file
+      let contentType = file.type
+      let ext = 'jpg'
+      if (isVideo) {
+        ext = file.name.split('.').pop() || 'mp4'
+      } else {
+        uploadFile = await compressImage(file)
+        contentType = 'image/jpeg'
+      }
+      const path = `${slug}/carousel/${photoId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('feed-photos').upload(path, uploadFile, { contentType, cacheControl: '3600' })
       if (error) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(path)
-      newImages.push({ url: publicUrl, path })
+      newImages.push({ url: publicUrl, path, type: isVideo ? 'video' : 'image' })
     }
     e.target.value = ''
     setUploading(false)
@@ -131,26 +204,33 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
     if (img?.path) await supabase.storage.from('feed-photos').remove([img.path])
   }
 
+  function handleDragEnd({ active, over }) {
+    if (!over || active.id === over.id) return
+    const oldIndex = images.findIndex(img => img.path === active.id)
+    const newIndex = images.findIndex(img => img.path === over.id)
+    onUpdate(arrayMove(images, oldIndex, newIndex))
+  }
+
   return (
     <>
-      {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
+      {zoomed && <Lightbox url={zoomed.url} type={zoomed.type} onClose={() => setZoomed(null)} />}
       <div className="px-6 py-4 bg-purple-50/40 border-t border-purple-100">
         <p className="text-xs font-semibold text-purple-500 mb-3 uppercase tracking-wider">
-          Carousel · {images.length} slide{images.length !== 1 ? 's' : ''}
+          Carousel · {images.length} slide{images.length !== 1 ? 's' : ''} · drag to reorder
         </p>
-        <div className="flex gap-2 flex-wrap items-center">
-          {images.map((img, i) => (
-            <div key={i} className="relative group flex-shrink-0">
-              <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full z-10">{i + 1}</div>
-              <img src={img.url} alt="" loading="lazy" onClick={() => setZoomed(img.url)} className="w-16 h-20 object-cover rounded-lg cursor-zoom-in shadow-sm hover:scale-105 transition-transform duration-200" />
-              <button onClick={() => handleRemove(i)} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 z-10">×</button>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={images.map(img => img.path)} strategy={horizontalListSortingStrategy}>
+            <div className="flex gap-2 flex-wrap items-center">
+              {images.map((img, i) => (
+                <CarouselSlide key={img.path} img={img} index={i} onZoom={setZoomed} onRemove={handleRemove} />
+              ))}
+              <label className="flex-shrink-0 w-16 h-20 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
+                {uploading ? <span className="text-purple-400 text-xs">…</span> : <><span className="text-purple-400 text-xl leading-none">+</span><span className="text-purple-400 text-[10px] mt-1">Add</span></>}
+                <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+              </label>
             </div>
-          ))}
-          <label className="flex-shrink-0 w-16 h-20 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
-            {uploading ? <span className="text-purple-400 text-xs">…</span> : <><span className="text-purple-400 text-xl leading-none">+</span><span className="text-purple-400 text-[10px] mt-1">Add</span></>}
-            <input type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-          </label>
-        </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </>
   )

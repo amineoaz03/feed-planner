@@ -172,7 +172,7 @@ function CarouselStrip({ photo, photoId, slug, onUpdate }) {
 
   // the cover (photo.url) is slide #1, carousel_images are the rest — merged so the whole sequence is draggable
   const allSlides = [
-    { url: photo.url, path: photo.storage_path, type: photo.media_type || 'image', isCover: true },
+    { url: photo.url, path: photo.storage_path, type: photo.media_type || 'image', poster: photo.poster_url, isCover: true },
     ...(photo.carousel_images || []),
   ]
 
@@ -226,6 +226,7 @@ function CarouselStrip({ photo, photoId, slug, onUpdate }) {
       url: newCover.url,
       storage_path: newCover.path,
       media_type: newCover.type,
+      poster_url: newCover.poster || null,
       carousel_images: remaining.map(({ isCover, ...img }) => img),
     })
     if (slide?.path) await supabase.storage.from('feed-photos').remove([slide.path])
@@ -241,6 +242,7 @@ function CarouselStrip({ photo, photoId, slug, onUpdate }) {
       url: newCover.url,
       storage_path: newCover.path,
       media_type: newCover.type,
+      poster_url: newCover.poster || null,
       carousel_images: rest.map(({ isCover, ...img }) => img),
     })
   }

@@ -161,7 +161,7 @@ function CarouselSlide({ img, index, onZoom, onRemove }) {
   )
 }
 
-function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
+function CarouselStrip({ photo, photoId, slug, onUpdate }) {
   const [uploading, setUploading] = useState(false)
   const [zoomed, setZoomed] = useState(null)
 
@@ -170,11 +170,17 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
   )
 
+  // the cover (photo.url) is slide #1, carousel_images are the rest — merged so the whole sequence is draggable
+  const allSlides = [
+    { url: photo.url, path: photo.storage_path, type: photo.media_type || 'image', isCover: true },
+    ...(photo.carousel_images || []),
+  ]
+
   async function handleUpload(e) {
     const files = Array.from(e.target.files)
     if (!files.length) return
     setUploading(true)
-    const newImages = [...images]
+    const newImages = [...(photo.carousel_images || [])]
     for (const file of files) {
       const isVideo = file.type.startsWith('video/')
       let uploadFile = file
@@ -194,21 +200,35 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
     }
     e.target.value = ''
     setUploading(false)
-    onUpdate(newImages)
+    onUpdate({ carousel_images: newImages })
   }
 
   async function handleRemove(index) {
-    const img = images[index]
-    const updated = images.filter((_, i) => i !== index)
-    onUpdate(updated)
-    if (img?.path) await supabase.storage.from('feed-photos').remove([img.path])
+    if (allSlides.length <= 1) return
+    const slide = allSlides[index]
+    const rest = allSlides.filter((_, i) => i !== index)
+    const [newCover, ...remaining] = rest
+    onUpdate({
+      url: newCover.url,
+      storage_path: newCover.path,
+      media_type: newCover.type,
+      carousel_images: remaining.map(({ isCover, ...img }) => img),
+    })
+    if (slide?.path) await supabase.storage.from('feed-photos').remove([slide.path])
   }
 
   function handleDragEnd({ active, over }) {
     if (!over || active.id === over.id) return
-    const oldIndex = images.findIndex(img => img.path === active.id)
-    const newIndex = images.findIndex(img => img.path === over.id)
-    onUpdate(arrayMove(images, oldIndex, newIndex))
+    const oldIndex = allSlides.findIndex(s => s.path === active.id)
+    const newIndex = allSlides.findIndex(s => s.path === over.id)
+    const reordered = arrayMove(allSlides, oldIndex, newIndex)
+    const [newCover, ...rest] = reordered
+    onUpdate({
+      url: newCover.url,
+      storage_path: newCover.path,
+      media_type: newCover.type,
+      carousel_images: rest.map(({ isCover, ...img }) => img),
+    })
   }
 
   return (
@@ -216,12 +236,12 @@ function CarouselStrip({ images = [], photoId, slug, onUpdate }) {
       {zoomed && <Lightbox url={zoomed.url} type={zoomed.type} onClose={() => setZoomed(null)} />}
       <div className="px-6 py-4 bg-purple-50/40 border-t border-purple-100">
         <p className="text-xs font-semibold text-purple-500 mb-3 uppercase tracking-wider">
-          Carousel · {images.length} slide{images.length !== 1 ? 's' : ''} · drag to reorder
+          Carousel · {allSlides.length} slide{allSlides.length !== 1 ? 's' : ''} · drag to reorder, slide 1 is the cover
         </p>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={images.map(img => img.path)} strategy={horizontalListSortingStrategy}>
+          <SortableContext items={allSlides.map(s => s.path)} strategy={horizontalListSortingStrategy}>
             <div className="flex gap-2 flex-wrap items-center">
-              {images.map((img, i) => (
+              {allSlides.map((img, i) => (
                 <CarouselSlide key={img.path} img={img} index={i} onZoom={setZoomed} onRemove={handleRemove} />
               ))}
               <label className="flex-shrink-0 w-16 h-20 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors">
@@ -398,10 +418,10 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
 
       {photo.post_type === 'Carousel' && (
         <CarouselStrip
-          images={photo.carousel_images || []}
+          photo={photo}
           photoId={photo.id}
           slug={slug}
-          onUpdate={imgs => onCarouselUpdate(photo.id, imgs)}
+          onUpdate={updates => onCarouselUpdate(photo.id, updates)}
         />
       )}
     </div>
@@ -461,10 +481,10 @@ export default function Planner() {
     }, 500)
   }
 
-  async function handleCarouselUpdate(id, newImages) {
-    setPhotos(prev => prev.map(p => p.id === id ? { ...p, carousel_images: newImages } : p))
+  async function handleCarouselUpdate(id, updates) {
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
     updatingRef.current = true
-    await supabase.from('photos').update({ carousel_images: newImages }).eq('id', id)
+    await supabase.from('photos').update(updates).eq('id', id)
     updatingRef.current = false
   }
 

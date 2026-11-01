@@ -10,7 +10,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '../lib/supabase'
-import { compressImage } from '../lib/compress'
+import { compressImage, generateVideoThumbnail } from '../lib/compress'
 import Nav from '../components/Nav'
 
 const DateChip = forwardRef(({ value, onClick, onClear }, ref) => {
@@ -135,8 +135,8 @@ function CarouselSlide({ img, index, onZoom, onRemove }) {
     >
       <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full z-10">{index + 1}</div>
       {isVideo ? (
-        <div onClick={() => onZoom(img)} className="relative w-16 h-20 rounded-lg overflow-hidden shadow-sm hover:scale-105 transition-transform duration-200">
-          <video src={`${img.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
+        <div onClick={() => onZoom(img)} className="relative w-16 h-20 rounded-lg overflow-hidden shadow-sm hover:scale-105 transition-transform duration-200 bg-gray-200">
+          {img.poster && <img src={img.poster} alt="" className="w-full h-full object-cover" />}
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
               <PlayIcon />
@@ -196,7 +196,21 @@ function CarouselStrip({ photo, photoId, slug, onUpdate }) {
       const { error } = await supabase.storage.from('feed-photos').upload(path, uploadFile, { contentType, cacheControl: '3600' })
       if (error) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(path)
-      newImages.push({ url: publicUrl, path, type: isVideo ? 'video' : 'image' })
+
+      let posterUrl = null
+      if (isVideo) {
+        try {
+          const posterBlob = await generateVideoThumbnail(file)
+          const posterPath = `${slug}/carousel/${photoId}-${Date.now()}-${Math.random().toString(36).slice(2)}-poster.jpg`
+          const { error: posterError } = await supabase.storage.from('feed-photos')
+            .upload(posterPath, posterBlob, { contentType: 'image/jpeg', cacheControl: '3600' })
+          if (!posterError) {
+            posterUrl = supabase.storage.from('feed-photos').getPublicUrl(posterPath).data.publicUrl
+          }
+        } catch {}
+      }
+
+      newImages.push({ url: publicUrl, path, type: isVideo ? 'video' : 'image', poster: posterUrl })
     }
     e.target.value = ''
     setUploading(false)
@@ -313,8 +327,8 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
         {/* photo */}
         <div className="px-2 py-3 flex items-center">
           {photo.media_type === 'video' ? (
-            <div onClick={() => onZoom({ url: photo.url, type: 'video' })} className="relative w-14 h-[72px] rounded-lg overflow-hidden shadow-sm cursor-zoom-in">
-              <video src={`${photo.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
+            <div onClick={() => onZoom({ url: photo.url, type: 'video' })} className="relative w-14 h-[72px] rounded-lg overflow-hidden shadow-sm cursor-zoom-in bg-gray-200">
+              {photo.poster_url && <img src={photo.poster_url} alt="" className="w-full h-full object-cover" />}
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
                   <PlayIcon />
@@ -543,7 +557,21 @@ export default function Planner() {
         .upload(storagePath, uploadFile, { contentType, cacheControl: '3600' })
       if (error) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
-      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', position: insertPos++, client_id: client.id })
+
+      let posterUrl = null
+      if (isVideo) {
+        try {
+          const posterBlob = await generateVideoThumbnail(file)
+          const posterPath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}-poster.jpg`
+          const { error: posterError } = await supabase.storage.from('feed-photos')
+            .upload(posterPath, posterBlob, { contentType: 'image/jpeg', cacheControl: '3600' })
+          if (!posterError) {
+            posterUrl = supabase.storage.from('feed-photos').getPublicUrl(posterPath).data.publicUrl
+          }
+        } catch {}
+      }
+
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', poster_url: posterUrl, position: insertPos++, client_id: client.id })
     }
 
     e.target.value = ''

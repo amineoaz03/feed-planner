@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import PhoneMockup from '../components/PhoneMockup'
 import PhotoGrid from '../components/PhotoGrid'
 import Nav from '../components/Nav'
-import { compressImage } from '../lib/compress'
+import { compressImage, generateVideoThumbnail } from '../lib/compress'
 
 export default function Admin() {
   const { slug } = useParams()
@@ -83,7 +83,21 @@ export default function Admin() {
         .upload(storagePath, uploadFile, { contentType, cacheControl: '3600', upsert: false })
       if (uploadError) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
-      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', position: insertPos++, client_id: client.id })
+
+      let posterUrl = null
+      if (isVideo) {
+        try {
+          const posterBlob = await generateVideoThumbnail(file)
+          const posterPath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}-poster.jpg`
+          const { error: posterError } = await supabase.storage.from('feed-photos')
+            .upload(posterPath, posterBlob, { contentType: 'image/jpeg', cacheControl: '3600' })
+          if (!posterError) {
+            posterUrl = supabase.storage.from('feed-photos').getPublicUrl(posterPath).data.publicUrl
+          }
+        } catch {}
+      }
+
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', poster_url: posterUrl, position: insertPos++, client_id: client.id })
     }
 
     e.target.value = ''
@@ -146,7 +160,11 @@ export default function Admin() {
               {photos.map((photo, i) => (
                 <div key={photo.id} className="relative group aspect-[4/5] bg-gray-100">
                   {photo.media_type === 'video' ? (
-                    <video src={`${photo.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
+                    photo.poster_url ? (
+                      <img src={photo.poster_url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200" />
+                    )
                   ) : (
                     <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   )}

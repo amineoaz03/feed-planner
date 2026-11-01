@@ -39,7 +39,9 @@ export default function SortablePhoto({ photo, onDelete, editMode, onOpen }) {
     >
       {isVideo ? (
         <>
-          <video src={`${photo.url}#t=0.1`} className="w-full h-full object-cover select-none" muted preload="metadata" />
+          {photo.poster_url && (
+            <img src={photo.poster_url} alt="" className="w-full h-full object-cover select-none" loading="lazy" draggable={false} />
+          )}
           <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
             <div className="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center">
               <svg width="9" height="9" viewBox="0 0 8 8" fill="#111827"><polygon points="2,1 7,4 2,7"/></svg>

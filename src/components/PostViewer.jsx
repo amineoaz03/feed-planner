@@ -42,17 +42,50 @@ function CarouselMedia({ slides }) {
     if (i !== index) setIndex(i)
   }
 
+  function goTo(i) {
+    const el = scrollRef.current
+    if (!el) return
+    const clamped = Math.max(0, Math.min(slides.length - 1, i))
+    el.scrollTo({ left: clamped * el.clientWidth, behavior: 'smooth' })
+    setIndex(clamped)
+  }
+
+  // mouse drag-to-scroll, for laptop/trackpad users without horizontal swipe gestures
+  const drag = useRef(null)
+  function handlePointerDown(e) {
+    if (e.pointerType === 'touch') return
+    const el = scrollRef.current
+    drag.current = { startX: e.clientX, scrollLeft: el.scrollLeft }
+    el.style.scrollSnapType = 'none'
+  }
+  function handlePointerMove(e) {
+    if (!drag.current) return
+    const el = scrollRef.current
+    el.scrollLeft = drag.current.scrollLeft - (e.clientX - drag.current.startX)
+  }
+  function handlePointerUp() {
+    if (!drag.current) return
+    drag.current = null
+    const el = scrollRef.current
+    el.style.scrollSnapType = ''
+    goTo(Math.round(el.scrollLeft / el.clientWidth))
+  }
+
   return (
     <div className="relative bg-black">
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar cursor-grab active:cursor-grabbing"
       >
         {slides.map((s, i) => (
           <div key={i} className="w-full flex-shrink-0 snap-start aspect-[4/5]">
             {s.type === 'video' ? (
-              <video src={s.url} className="w-full h-full object-cover" controls playsInline preload="metadata" />
+              <video src={s.url} poster={s.poster || undefined} className="w-full h-full object-cover" controls playsInline preload="metadata" />
             ) : (
               <img src={s.url} alt="" draggable={false} className="w-full h-full object-cover" />
             )}
@@ -69,6 +102,22 @@ function CarouselMedia({ slides }) {
               <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === index ? 'bg-blue-500' : 'bg-white/70'}`} />
             ))}
           </div>
+          {index > 0 && (
+            <button
+              onClick={() => goTo(index - 1)}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/80 hover:bg-white text-gray-800 rounded-full flex items-center justify-center shadow"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+          )}
+          {index < slides.length - 1 && (
+            <button
+              onClick={() => goTo(index + 1)}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/80 hover:bg-white text-gray-800 rounded-full flex items-center justify-center shadow"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          )}
         </>
       )}
     </div>
@@ -77,8 +126,8 @@ function CarouselMedia({ slides }) {
 
 function PostCard({ photo, clientName, setRef }) {
   const slides = photo.post_type === 'Carousel' && photo.carousel_images?.length > 0
-    ? [{ url: photo.url, type: photo.media_type || 'image' }, ...photo.carousel_images]
-    : [{ url: photo.url, type: photo.media_type || 'image' }]
+    ? [{ url: photo.url, type: photo.media_type || 'image', poster: photo.poster_url }, ...photo.carousel_images]
+    : [{ url: photo.url, type: photo.media_type || 'image', poster: photo.poster_url }]
 
   return (
     <div ref={setRef} className="border-b border-gray-100">

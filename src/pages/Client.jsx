@@ -71,6 +71,7 @@ export default function Client() {
             onReorder={editMode ? handleReorder : null}
             onDelete={editMode ? handleDelete : null}
             editMode={editMode}
+            clientName={client.name}
           />
         </PhoneMockup>
       </div>

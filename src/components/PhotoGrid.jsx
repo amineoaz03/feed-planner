@@ -15,7 +15,7 @@ import {
 import SortablePhoto from './SortablePhoto'
 import PostViewer from './PostViewer'
 
-export default function PhotoGrid({ photos, onReorder, onDelete, editMode }) {
+export default function PhotoGrid({ photos, onReorder, onDelete, editMode, clientName }) {
   const [viewerIndex, setViewerIndex] = useState(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -65,7 +65,7 @@ export default function PhotoGrid({ photos, onReorder, onDelete, editMode }) {
       </DndContext>
 
       {viewerIndex !== null && (
-        <PostViewer photos={photos} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
+        <PostViewer photos={photos} startIndex={viewerIndex} clientName={clientName} onClose={() => setViewerIndex(null)} />
       )}
     </>
   )

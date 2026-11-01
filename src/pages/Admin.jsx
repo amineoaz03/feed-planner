@@ -67,14 +67,23 @@ export default function Admin() {
 
     let insertPos = 0
     for (const file of files) {
-      const compressed = await compressImage(file)
-      const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      const isVideo = file.type.startsWith('video/')
+      let uploadFile = file
+      let contentType = file.type
+      let ext = 'jpg'
+      if (isVideo) {
+        ext = file.name.split('.').pop() || 'mp4'
+      } else {
+        uploadFile = await compressImage(file)
+        contentType = 'image/jpeg'
+      }
+      const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('feed-photos')
-        .upload(storagePath, compressed, { contentType: 'image/jpeg', cacheControl: '3600', upsert: false })
+        .upload(storagePath, uploadFile, { contentType, cacheControl: '3600', upsert: false })
       if (uploadError) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
-      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, position: insertPos++, client_id: client.id })
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', position: insertPos++, client_id: client.id })
     }
 
     e.target.value = ''
@@ -113,7 +122,7 @@ export default function Admin() {
           </div>
           <label className={`cursor-pointer px-4 py-2 text-sm rounded-xl border border-gray-900 ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900 hover:text-white'} transition-colors`}>
             {uploading ? 'Uploading…' : 'Upload Photos'}
-            <input type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+            <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
         </div>
 
@@ -135,7 +144,11 @@ export default function Admin() {
             <div className="grid grid-cols-4 gap-1">
               {photos.map((photo, i) => (
                 <div key={photo.id} className="relative group aspect-[4/5] bg-gray-100">
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  {photo.media_type === 'video' ? (
+                    <video src={photo.url} className="w-full h-full object-cover" muted />
+                  ) : (
+                    <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                  )}
                   <div className="absolute bottom-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1">{i + 1}</div>
                   <button
                     onClick={() => handleDelete(photo.id, photo.storage_path)}

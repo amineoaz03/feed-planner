@@ -28,15 +28,28 @@ export default function SortablePhoto({ photo, onDelete, editMode }) {
     zIndex: isDragging ? 10 : 'auto',
   }
 
+  const isVideo = photo.media_type === 'video'
+
   return (
     <div ref={setNodeRef} style={style} className="relative group aspect-[4/5] bg-gray-100">
-      <img
-        src={photo.url}
-        alt=""
-        className="w-full h-full object-cover select-none"
-        loading="lazy"
-        draggable={false}
-      />
+      {isVideo ? (
+        <>
+          <video src={photo.url} className="w-full h-full object-cover select-none" muted />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/10 pointer-events-none">
+            <div className="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center">
+              <svg width="9" height="9" viewBox="0 0 8 8" fill="#111827"><polygon points="2,1 7,4 2,7"/></svg>
+            </div>
+          </div>
+        </>
+      ) : (
+        <img
+          src={photo.url}
+          alt=""
+          className="w-full h-full object-cover select-none"
+          loading="lazy"
+          draggable={false}
+        />
+      )}
 
       {editMode && (
         <>

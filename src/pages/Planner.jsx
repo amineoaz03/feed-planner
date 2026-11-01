@@ -292,13 +292,24 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
 
         {/* photo */}
         <div className="px-2 py-3 flex items-center">
-          <img
-            src={photo.url}
-            alt=""
-            loading="lazy"
-            onClick={() => onZoom(photo.url)}
-            className="w-14 h-[72px] object-cover rounded-lg shadow-sm cursor-zoom-in"
-          />
+          {photo.media_type === 'video' ? (
+            <div onClick={() => onZoom({ url: photo.url, type: 'video' })} className="relative w-14 h-[72px] rounded-lg overflow-hidden shadow-sm cursor-zoom-in">
+              <video src={photo.url} className="w-full h-full object-cover" muted />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
+                  <PlayIcon />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <img
+              src={photo.url}
+              alt=""
+              loading="lazy"
+              onClick={() => onZoom({ url: photo.url, type: 'image' })}
+              className="w-14 h-[72px] object-cover rounded-lg shadow-sm cursor-zoom-in"
+            />
+          )}
         </div>
 
         {/* date */}
@@ -497,13 +508,22 @@ export default function Planner() {
 
     let insertPos = 0
     for (const file of files) {
-      const compressed = await compressImage(file)
-      const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
+      const isVideo = file.type.startsWith('video/')
+      let uploadFile = file
+      let contentType = file.type
+      let ext = 'jpg'
+      if (isVideo) {
+        ext = file.name.split('.').pop() || 'mp4'
+      } else {
+        uploadFile = await compressImage(file)
+        contentType = 'image/jpeg'
+      }
+      const storagePath = `${client.slug}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error } = await supabase.storage.from('feed-photos')
-        .upload(storagePath, compressed, { contentType: 'image/jpeg', cacheControl: '3600' })
+        .upload(storagePath, uploadFile, { contentType, cacheControl: '3600' })
       if (error) continue
       const { data: { publicUrl } } = supabase.storage.from('feed-photos').getPublicUrl(storagePath)
-      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, position: insertPos++, client_id: client.id })
+      await supabase.from('photos').insert({ url: publicUrl, storage_path: storagePath, media_type: isVideo ? 'video' : 'image', position: insertPos++, client_id: client.id })
     }
 
     e.target.value = ''
@@ -514,7 +534,7 @@ export default function Planner() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {zoomed && <Lightbox url={zoomed} onClose={() => setZoomed(null)} />}
+      {zoomed && <Lightbox url={zoomed.url} type={zoomed.type} onClose={() => setZoomed(null)} />}
       <Nav />
 
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -525,7 +545,7 @@ export default function Planner() {
           </div>
           <label className={`cursor-pointer px-4 py-2 text-sm rounded-xl border border-gray-900 transition-colors ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900 hover:text-white'}`}>
             {uploading ? 'Uploading…' : 'Add Photo'}
-            <input type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+            <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} disabled={uploading} />
           </label>
         </div>
 

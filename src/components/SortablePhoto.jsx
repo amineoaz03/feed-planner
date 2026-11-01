@@ -11,7 +11,7 @@ function GripIcon() {
   )
 }
 
-export default function SortablePhoto({ photo, onDelete, editMode }) {
+export default function SortablePhoto({ photo, onDelete, editMode, onOpen }) {
   const {
     attributes,
     listeners,
@@ -31,7 +31,12 @@ export default function SortablePhoto({ photo, onDelete, editMode }) {
   const isVideo = photo.media_type === 'video'
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group aspect-[4/5] bg-gray-100">
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => !editMode && onOpen && onOpen()}
+      className={`relative group aspect-[4/5] bg-gray-100 ${!editMode ? 'cursor-pointer' : ''}`}
+    >
       {isVideo ? (
         <>
           <video src={photo.url} className="w-full h-full object-cover select-none" muted />

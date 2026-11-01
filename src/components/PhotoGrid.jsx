@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -12,8 +13,10 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
 import SortablePhoto from './SortablePhoto'
+import PostViewer from './PostViewer'
 
 export default function PhotoGrid({ photos, onReorder, onDelete, editMode }) {
+  const [viewerIndex, setViewerIndex] = useState(null)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
@@ -39,19 +42,31 @@ export default function PhotoGrid({ photos, onReorder, onDelete, editMode }) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-      autoScroll={{ enabled: true }}
-    >
-      <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-3 gap-px bg-gray-200">
-          {photos.map((photo) => (
-            <SortablePhoto key={photo.id} photo={photo} onDelete={onDelete} editMode={editMode} />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+        autoScroll={{ enabled: true }}
+      >
+        <SortableContext items={photos.map((p) => p.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-3 gap-px bg-gray-200">
+            {photos.map((photo, i) => (
+              <SortablePhoto
+                key={photo.id}
+                photo={photo}
+                onDelete={onDelete}
+                editMode={editMode}
+                onOpen={() => setViewerIndex(i)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {viewerIndex !== null && (
+        <PostViewer photos={photos} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
+      )}
+    </>
   )
 }

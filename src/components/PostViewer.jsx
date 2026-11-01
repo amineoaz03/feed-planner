@@ -52,7 +52,7 @@ function CarouselMedia({ slides }) {
         {slides.map((s, i) => (
           <div key={i} className="w-full flex-shrink-0 snap-start aspect-[4/5]">
             {s.type === 'video' ? (
-              <video src={s.url} className="w-full h-full object-cover" controls playsInline />
+              <video src={s.url} className="w-full h-full object-cover" controls playsInline preload="metadata" />
             ) : (
               <img src={s.url} alt="" draggable={false} className="w-full h-full object-cover" />
             )}

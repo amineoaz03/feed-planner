@@ -98,7 +98,7 @@ function Lightbox({ url, type, onClose }) {
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center" onClick={onClose}>
       <button onClick={onClose} className="absolute top-5 right-5 w-9 h-9 bg-white/10 hover:bg-white/20 text-white text-xl flex items-center justify-center rounded-full border border-white/20">×</button>
       {type === 'video' ? (
-        <video src={url} controls autoPlay onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] rounded-lg shadow-2xl" />
+        <video src={url} controls autoPlay preload="metadata" onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] rounded-lg shadow-2xl" />
       ) : (
         <img src={url} alt="" onClick={e => e.stopPropagation()} className="max-h-[88vh] max-w-[88vw] object-contain rounded-lg shadow-2xl" />
       )}
@@ -136,7 +136,7 @@ function CarouselSlide({ img, index, onZoom, onRemove }) {
       <div className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-purple-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full z-10">{index + 1}</div>
       {isVideo ? (
         <div onClick={() => onZoom(img)} className="relative w-16 h-20 rounded-lg overflow-hidden shadow-sm hover:scale-105 transition-transform duration-200">
-          <video src={img.url} className="w-full h-full object-cover" muted />
+          <video src={`${img.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
               <PlayIcon />
@@ -314,7 +314,7 @@ function SortableRow({ photo, slug, onZoom, onFieldChange, onCarouselUpdate, onD
         <div className="px-2 py-3 flex items-center">
           {photo.media_type === 'video' ? (
             <div onClick={() => onZoom({ url: photo.url, type: 'video' })} className="relative w-14 h-[72px] rounded-lg overflow-hidden shadow-sm cursor-zoom-in">
-              <video src={photo.url} className="w-full h-full object-cover" muted />
+              <video src={`${photo.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <div className="w-6 h-6 bg-white/90 rounded-full flex items-center justify-center">
                   <PlayIcon />

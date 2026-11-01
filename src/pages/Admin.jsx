@@ -146,7 +146,7 @@ export default function Admin() {
               {photos.map((photo, i) => (
                 <div key={photo.id} className="relative group aspect-[4/5] bg-gray-100">
                   {photo.media_type === 'video' ? (
-                    <video src={photo.url} className="w-full h-full object-cover" muted />
+                    <video src={`${photo.url}#t=0.1`} className="w-full h-full object-cover" muted preload="metadata" />
                   ) : (
                     <img src={photo.url} alt="" className="w-full h-full object-cover" loading="lazy" />
                   )}

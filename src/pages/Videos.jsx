@@ -133,7 +133,7 @@ function SortableRow({ video, onFieldChange, onDelete }) {
 
   return (
     <div ref={setNodeRef} style={style} className="border-b last:border-0 group relative border-gray-100">
-      <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_160px] min-w-[880px] hover:bg-black/[0.01] transition-colors items-center">
+      <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_140px_160px] min-w-[1020px] hover:bg-black/[0.01] transition-colors items-center">
 
         {/* drag + delete */}
         <div className="flex flex-col items-center justify-center gap-2 py-2">
@@ -217,6 +217,16 @@ function SortableRow({ video, onFieldChange, onDelete }) {
               </svg>
             </a>
           )}
+        </div>
+
+        {/* assigned to */}
+        <div className="px-4 py-3 border-l border-gray-100">
+          <input
+            value={video.assigned_to || ''}
+            onChange={e => onFieldChange(video.id, 'assigned_to', e.target.value)}
+            placeholder="Assigned to…"
+            className="w-full text-sm bg-transparent outline-none text-gray-700 placeholder-gray-300"
+          />
         </div>
 
         {/* status */}
@@ -360,12 +370,13 @@ export default function Videos() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
 
           {/* header */}
-          <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_160px] min-w-[880px] bg-gray-50 border-b border-gray-200">
+          <div className="grid grid-cols-[32px_180px_160px_1fr_1fr_140px_160px] min-w-[1020px] bg-gray-50 border-b border-gray-200">
             <div />
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Title</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Date</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Caption</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Link</div>
+            <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Assigned to</div>
             <div className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</div>
           </div>
 
